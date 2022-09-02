@@ -46,6 +46,7 @@ buildNumber.properties
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+.idea/**/misc.xml
 
 # Generated files
 .idea/**/contentModel.xml
@@ -82,10 +83,11 @@ cmake-build-*/
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
 
-# File-based project format
-*.iws
-
 # IntelliJ
+.idea
+*.iws
+*.iml
+*.ipr
 out/
 
 # mpeltonen/sbt-idea plugin
