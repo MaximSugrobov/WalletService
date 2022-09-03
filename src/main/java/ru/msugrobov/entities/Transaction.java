@@ -6,8 +6,8 @@ import java.math.BigDecimal;
 
 @Data
 public class Transaction {
-    private int id;
-    private int walletID;
+    private Integer id;
+    private int walletId;
     private Type type;
     private BigDecimal value;
 }

@@ -6,7 +6,7 @@ import java.util.Date;
 
 @Data
 public class Commands {
-    private int id;
+    private Integer id;
     private int playerId;
     private String action;
     private Date date;

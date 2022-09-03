@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 @Data
 public class Wallet {
-    private int id;
+    private Integer id;
     private int playerId;
     private BigDecimal balance;
 }
