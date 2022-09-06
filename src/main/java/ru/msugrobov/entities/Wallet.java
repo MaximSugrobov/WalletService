@@ -1,5 +1,6 @@
 package ru.msugrobov.entities;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -8,6 +9,7 @@ import java.math.BigDecimal;
  * Entity for wallet
  */
 @Data
+@AllArgsConstructor
 public class Wallet {
     /**
      * Wallet's identifier

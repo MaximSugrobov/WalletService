@@ -1,8 +1,9 @@
 package ru.msugrobov.repositories;
 
+import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
 import ru.msugrobov.entities.Player;
-import ru.msugrobov.exceptions.LoginNotFoundException;
+import ru.msugrobov.exceptions.LoginAlreadyExistsException;
 
 import java.util.List;
 import java.util.Objects;
@@ -42,7 +43,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     }
 
     /**
-     * Create new players entity
+     * Create new player entity
      *
      * @param player creates entity if not already exists
      */
@@ -50,11 +51,11 @@ public class PlayerRepository implements RepositoryInterface<Player> {
         if (!existByLogin(player.getLogin()) && !existById(player.getId())) {
             storage.add(player);
         } else if (existByLogin(player.getLogin())) {
-            throw new LoginNotFoundException(String.
+            throw new LoginAlreadyExistsException(String.
                     format("Player with login %s already exists", player.getLogin()));
         } else if (existById(player.getId())) {
-            throw new IdNotFoundException(String
-                    .format("Player with id %s does not exists", player.getId()));
+            throw new IdAlreadyExistsException(String
+                    .format("Player with id %s already exists", player.getId()));
         }
     }
 
