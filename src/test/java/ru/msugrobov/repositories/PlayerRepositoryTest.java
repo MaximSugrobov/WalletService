@@ -42,27 +42,21 @@ public class PlayerRepositoryTest {
     @Test
     @DisplayName("Test for creating player with existing login")
     void createPlayerWithExistingLoginTest() {
-        Player newPlayer = new Player(3, "Name",
-                "Some", "Kek", "456", Role.USER);
         Player playerWithExistingLogin = new Player(2, "Some",
                 "Surname", "Max", "123", Role.USER);
-        testRepository.create(newPlayer);
         assertThatThrownBy(() -> testRepository.create(playerWithExistingLogin))
                 .isInstanceOf(LoginNotFoundException.class).hasMessageContaining("login");
-        assertThat(storage).hasSize(2);
+        assertThat(storage).hasSize(1);
     }
 
     @Test
     @DisplayName("Test for creating player with existing Id")
     void createPlayerWithExistingIdTest() {
-        Player newPlayer = new Player(2, "Name",
-                "Some", "Kek", "456", Role.USER);
-        Player playerWithExistingId = new Player(2, "Patrik",
+        Player playerWithExistingId = new Player(1, "Patrik",
                 "Starfish", "Patrik", "678", Role.USER);
-        testRepository.create(newPlayer);
         assertThatThrownBy(() -> testRepository.create(playerWithExistingId))
                 .isInstanceOf(RuntimeException.class).hasMessageContaining("id");
-        assertThat(storage).hasSize(2);
+        assertThat(storage).hasSize(1);
     }
 
     @Test
