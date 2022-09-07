@@ -14,7 +14,6 @@ import java.util.Objects;
 public class WalletRepository implements RepositoryInterface<Wallet> {
 
     private final List<Wallet> storage;
-
     public WalletRepository(List<Wallet> storage) { this.storage = storage; }
 
     /**

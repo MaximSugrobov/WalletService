@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 public class TransactionRepository implements RepositoryInterface<Transaction> {
 
     private final List<Transaction> storage;
-
     public TransactionRepository(List<Transaction> storage) {
         this.storage = storage;
     }

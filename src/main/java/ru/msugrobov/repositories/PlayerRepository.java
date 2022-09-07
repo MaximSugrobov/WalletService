@@ -15,7 +15,6 @@ import java.util.Objects;
 public class PlayerRepository implements RepositoryInterface<Player> {
 
     private final List<Player> storage;
-
     public PlayerRepository(List<Player> storage) {
         this.storage = storage;
     }
