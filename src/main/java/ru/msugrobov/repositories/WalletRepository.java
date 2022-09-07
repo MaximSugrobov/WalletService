@@ -17,16 +17,6 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
 
     public WalletRepository(List<Wallet> storage) { this.storage = storage; }
 
-    private boolean existById(int idNumber) {
-        return storage.stream().anyMatch(currentRecord -> Objects
-                .equals(currentRecord.getId(), idNumber));
-    }
-
-    private boolean existByPlayerId(Wallet wallet) {
-        return storage.stream().anyMatch(currentRecord -> Objects
-                .equals(currentRecord.getPlayerId(), wallet.getPlayerId()));
-    }
-
     /**
      * Read the information about wallet by its id
      *
@@ -65,11 +55,7 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @param wallet   updated context of the entity
      */
     public void update(int idNumber, Wallet wallet) {
-        Wallet findWalletById = storage.stream()
-                .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
-                .findAny()
-                .orElseThrow(() -> new IdNotFoundException(String
-                        .format("Wallet with id %s does not exists", idNumber)));
+        Wallet findWalletById = this.readById(idNumber);
         findWalletById.setBalance(wallet.getBalance());
     }
 
@@ -79,11 +65,17 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @param idNumber identifier
      */
     public void delete(int idNumber) {
-        Wallet findWalletById = storage.stream()
-                .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
-                .findAny()
-                .orElseThrow(() -> new IdNotFoundException(String
-                        .format("Wallet with id %s does not exists", idNumber)));
+        Wallet findWalletById = this.readById(idNumber);
         storage.remove(findWalletById);
+    }
+
+    private boolean existById(int idNumber) {
+        return storage.stream().anyMatch(currentRecord -> Objects
+                .equals(currentRecord.getId(), idNumber));
+    }
+
+    private boolean existByPlayerId(Wallet wallet) {
+        return storage.stream().anyMatch(currentRecord -> Objects
+                .equals(currentRecord.getPlayerId(), wallet.getPlayerId()));
     }
 }

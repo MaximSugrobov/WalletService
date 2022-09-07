@@ -20,14 +20,6 @@ public class PlayerRepository implements RepositoryInterface<Player> {
         this.storage = storage;
     }
 
-    private boolean existByLogin(String login) {
-        return storage.stream().anyMatch(currentRecord -> Objects.equals(currentRecord.getLogin(), login));
-    }
-
-    private boolean existById(int idNumber) {
-        return storage.stream().anyMatch(currentRecord -> Objects.equals(currentRecord.getId(), idNumber));
-    }
-
     /**
      * Read the information about player by its id
      *
@@ -66,11 +58,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @param player   updated context of the entity
      */
     public void update(int idNumber, Player player) {
-        Player findPlayerById = storage.stream()
-                .filter(currentRecord -> currentRecord.getId() == idNumber)
-                .findAny()
-                .orElseThrow(() -> new IdNotFoundException(String
-                        .format("Player with id %s does not exists", idNumber)));
+        Player findPlayerById = this.readById(idNumber);
         findPlayerById.updateFrom(player);
     }
 
@@ -80,11 +68,15 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @param idNumber identifier
      */
     public void delete(int idNumber) {
-        Player findPlayerById = storage.stream()
-                .filter(currentRecord -> currentRecord.getId() == idNumber)
-                .findAny()
-                .orElseThrow(() -> new IdNotFoundException(String
-                        .format("Player with id %s does not exists", idNumber)));
+        Player findPlayerById = this.readById(idNumber);
         storage.remove(findPlayerById);
+    }
+
+    private boolean existByLogin(String login) {
+        return storage.stream().anyMatch(currentRecord -> Objects.equals(currentRecord.getLogin(), login));
+    }
+
+    private boolean existById(int idNumber) {
+        return storage.stream().anyMatch(currentRecord -> Objects.equals(currentRecord.getId(), idNumber));
     }
 }
