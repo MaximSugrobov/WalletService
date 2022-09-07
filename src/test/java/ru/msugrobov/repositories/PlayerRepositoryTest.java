@@ -1,5 +1,6 @@
 package ru.msugrobov.repositories;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +20,7 @@ public class PlayerRepositoryTest {
     private final List<Player> storage = new ArrayList<>();
     private final PlayerRepository testRepository = new PlayerRepository(storage);
     private Player initPlayer;
+    private final SoftAssertions playerRepositoryAssertion = new SoftAssertions();
 
     @BeforeEach
     public void initEach() {
@@ -38,7 +40,9 @@ public class PlayerRepositoryTest {
         Player player = new Player(2, "Maxim", "Sugrobov",
                 "Snow", "Pass", Role.ADMIN);
         this.testRepository.create(player);
-        assertThat(this.storage).isNotNull().contains(player);
+        playerRepositoryAssertion.assertThat(this.storage).isNotNull().contains(player);
+        playerRepositoryAssertion.assertThat(this.storage).hasSize(2);
+        playerRepositoryAssertion.assertAll();
     }
 
     @Test
@@ -46,9 +50,10 @@ public class PlayerRepositoryTest {
     public void createPlayerWithExistingLoginTest() {
         Player playerWithExistingLogin = new Player(2, "Some",
                 "Surname", "Max", "123", Role.USER);
-        assertThatThrownBy(() -> this.testRepository.create(playerWithExistingLogin))
+        playerRepositoryAssertion.assertThatThrownBy(() -> this.testRepository.create(playerWithExistingLogin))
                 .isInstanceOf(LoginAlreadyExistsException.class).hasMessageContaining("login");
-        assertThat(this.storage).hasSize(1);
+        playerRepositoryAssertion.assertThat(this.storage).hasSize(1);
+        playerRepositoryAssertion.assertAll();
     }
 
     @Test
@@ -56,9 +61,10 @@ public class PlayerRepositoryTest {
     public void createPlayerWithExistingIdTest() {
         Player playerWithExistingId = new Player(1, "Patrik",
                 "Starfish", "Patrik", "678", Role.USER);
-        assertThatThrownBy(() -> this.testRepository.create(playerWithExistingId))
+        playerRepositoryAssertion.assertThatThrownBy(() -> this.testRepository.create(playerWithExistingId))
                 .isInstanceOf(IdAlreadyExistsException.class).hasMessageContaining("id");
-        assertThat(this.storage).hasSize(1);
+        playerRepositoryAssertion.assertThat(this.storage).hasSize(1);
+        playerRepositoryAssertion.assertAll();
     }
 
     @Test

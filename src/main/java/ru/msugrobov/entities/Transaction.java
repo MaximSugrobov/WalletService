@@ -1,5 +1,6 @@
 package ru.msugrobov.entities;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -8,6 +9,7 @@ import java.math.BigDecimal;
  * Entity for transaction
  */
 @Data
+@AllArgsConstructor
 public class Transaction {
     /**
      * Transaction identifier
@@ -28,4 +30,13 @@ public class Transaction {
      * Transaction's value
      */
     private BigDecimal value;
+
+    /**
+     * Update transaction info by id
+     *
+     * @param transaction updated context of the transaction
+     */
+    public void updateFrom(Transaction transaction) {
+        this.value = transaction.getValue();
+    }
 }

@@ -1,5 +1,6 @@
 package ru.msugrobov.repositories;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,10 +21,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class WalletRepositoryTest {
 
     private final List<Wallet> storage = new ArrayList<>();
-
     private final WalletRepository testRepository = new WalletRepository(storage);
-
     private Wallet initWallet;
+    private final SoftAssertions walletRepositoryAssertion = new SoftAssertions();
 
     @BeforeEach
     public void initEach() {
@@ -43,24 +43,27 @@ public class WalletRepositoryTest {
     public void createWalletTest(){
         Wallet wallet = new Wallet(2, 2, new BigDecimal(10000));
         this.testRepository.create(wallet);
+        assertThat(this.storage).isNotNull().contains(wallet);
     }
 
     @Test
     @DisplayName("Test for creating new wallet with existing id")
     public void createWalletWithExistingIdTest(){
         Wallet walletWithExistingId = new Wallet(1, 2, new BigDecimal(10000));
-        assertThatThrownBy(() -> this.testRepository.create(walletWithExistingId))
+        walletRepositoryAssertion.assertThatThrownBy(() -> this.testRepository.create(walletWithExistingId))
                 .isInstanceOf(IdAlreadyExistsException.class).hasMessageContaining("id");
-        assertThat(storage).hasSize(1);
+        walletRepositoryAssertion.assertThat(storage).hasSize(1);
+        walletRepositoryAssertion.assertAll();
     }
 
     @Test
     @DisplayName("Test for creating new wallet with existing playerId")
     public void createWalletWithExistingPlayerIdTest(){
         Wallet walletWithExistingPlayerId = new Wallet(2, 1, new BigDecimal(10000));
-        assertThatThrownBy(() -> this.testRepository.create(walletWithExistingPlayerId))
+        walletRepositoryAssertion.assertThatThrownBy(() -> this.testRepository.create(walletWithExistingPlayerId))
                 .isInstanceOf(IdAlreadyExistsException.class).hasMessageContaining("playerId");
-        assertThat(storage).hasSize(1);
+        walletRepositoryAssertion.assertThat(storage).hasSize(1);
+        walletRepositoryAssertion.assertAll();
     }
 
     @Test
