@@ -9,7 +9,7 @@ import ru.msugrobov.entities.*;
 import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class CommandRepositoryTest {
     private final Player initPlayer = new Player(1, "Max",
             "Snow", "Snow", "Pass", Role.ADMIN);
     private final SoftAssertions transactionRepositoryAssertion = new SoftAssertions();
-    private final LocalDate testDate = LocalDate.of(2022, 4, 28);
+    private final LocalDateTime testDate = LocalDateTime.of(2022, 4, 28, 12, 30);
 
     @BeforeEach
     void initEach() {
@@ -85,7 +85,7 @@ public class CommandRepositoryTest {
     @DisplayName("Test for updating command")
     public void updateTest() {
         Command testCommand = new Command(1, initPlayer.getId(),
-                "updatedAction", LocalDate.of(2022, 4, 30));
+                "updatedAction", LocalDateTime.of(2022, 4, 30, 12, 40));
         this.testRepository.update(1, testCommand);
         assertThat(testCommand).usingRecursiveComparison().isEqualTo(initCommand);
     }
@@ -94,7 +94,7 @@ public class CommandRepositoryTest {
     @DisplayName("Test for updating command by not existing id")
     public void updateByNotExistingIdTest() {
         Command testCommand = new Command(1, initPlayer.getId(),
-                "updatedAction", LocalDate.of(2022, 4, 30));
+                "updatedAction", LocalDateTime.of(2022, 4, 30, 12, 40));
         assertThatThrownBy(() -> this.testRepository.update(2, testCommand))
                 .isInstanceOf(IdNotFoundException.class).hasMessageContaining("id");
     }

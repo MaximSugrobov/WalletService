@@ -3,7 +3,7 @@ package ru.msugrobov.entities;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Entity for commands
@@ -29,7 +29,7 @@ public class Command {
     /**
      * Date of performed command
      */
-    private LocalDate date;
+    private LocalDateTime date;
 
     /**
      * Update command info by id
