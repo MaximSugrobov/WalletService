@@ -29,7 +29,7 @@ public class Command {
     /**
      * Date of performed command
      */
-    private LocalDateTime date;
+    private LocalDateTime dateTime;
 
     /**
      * Update command info by id
@@ -38,6 +38,6 @@ public class Command {
      */
     public void updateFrom(Command command) {
         this.action = command.getAction();
-        this.date = command.getDate();
+        this.dateTime = command.getDateTime();
     }
 }
