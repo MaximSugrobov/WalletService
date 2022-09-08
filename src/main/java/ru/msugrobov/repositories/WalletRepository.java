@@ -14,11 +14,10 @@ import java.util.Objects;
 public class WalletRepository implements RepositoryInterface<Wallet> {
 
     private final List<Wallet> storage;
-
     public WalletRepository(List<Wallet> storage) { this.storage = storage; }
 
     /**
-     * Read the information about wallet by its id
+     * Read information about wallet by its id
      *
      * @param idNumber identifier
      * @return stored entity by id if exists
@@ -28,7 +27,7 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
                 .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
                 .findAny()
                 .orElseThrow(() -> new IdNotFoundException(String
-                        .format("Wallet with id %s does not exists", idNumber)));
+                        .format("Wallet with id %s does not exist", idNumber)));
     }
 
     /**
@@ -38,8 +37,8 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      */
     public void create(Wallet wallet) {
         if (!existById(wallet.getId()) && !existByPlayerId(wallet)) {
-            storage.add(wallet);
-        } else if (existById(wallet.getId())){
+            this.storage.add(wallet);
+        } else if (existById(wallet.getId())) {
             throw new IdAlreadyExistsException(String
                     .format("Wallet with id %s already exists", wallet.getId()));
         } else if (existByPlayerId(wallet)) {

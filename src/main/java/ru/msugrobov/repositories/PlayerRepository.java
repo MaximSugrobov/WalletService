@@ -15,23 +15,22 @@ import java.util.Objects;
 public class PlayerRepository implements RepositoryInterface<Player> {
 
     private final List<Player> storage;
-
     public PlayerRepository(List<Player> storage) {
         this.storage = storage;
     }
 
     /**
-     * Read the information about player by its id
+     * Read information about player by its id
      *
      * @param idNumber identifier
      * @return stored entity by id if exists
      */
     public Player readById(int idNumber) {
-        return storage.stream()
+        return this.storage.stream()
                 .filter(currentRecord -> currentRecord.getId() == idNumber)
                 .findAny()
                 .orElseThrow(() -> new IdNotFoundException(String
-                        .format("Player with id %s does not exists", idNumber)));
+                        .format("Player with id %s does not exist", idNumber)));
     }
 
     /**
@@ -41,7 +40,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      */
     public void create(Player player) {
         if (!existByLogin(player.getLogin()) && !existById(player.getId())) {
-            storage.add(player);
+            this.storage.add(player);
         } else if (existByLogin(player.getLogin())) {
             throw new LoginAlreadyExistsException(String.
                     format("Player with login %s already exists", player.getLogin()));
