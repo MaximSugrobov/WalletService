@@ -6,6 +6,7 @@ import ru.msugrobov.exceptions.IdNotFoundException;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Repository for wallet entity
@@ -15,6 +16,17 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
 
     private final List<Wallet> storage;
     public WalletRepository(List<Wallet> storage) { this.storage = storage; }
+
+    /**
+     * Read all wallets
+     *
+     * @return all entities in storage
+     */
+    public List<Wallet> readAll() {
+        return this.storage.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
 
     /**
      * Read information about wallet by its id

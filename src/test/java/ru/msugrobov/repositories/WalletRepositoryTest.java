@@ -5,9 +5,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import ru.msugrobov.entities.Player;
-import ru.msugrobov.entities.Wallet;
-import ru.msugrobov.entities.Role;
+import ru.msugrobov.entities.*;
 import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
 
@@ -116,5 +114,17 @@ public class WalletRepositoryTest {
     public void deleteByNotExistingIdTest() {
         assertThatThrownBy(() -> this.testRepository.delete(2))
                 .isInstanceOf(IdNotFoundException.class).hasMessageContaining("id");
+    }
+
+    @Test
+    @DisplayName("Test for reading all twallets from storage")
+    public void readAllTest() {
+        Wallet wallet = new Wallet(2, 2, new BigDecimal(10000));
+        this.testRepository.create(wallet);
+        List<Wallet> allWalletsInStorage = this.testRepository.readAll();
+        walletRepositoryAssertion.assertThat(allWalletsInStorage)
+                .usingRecursiveFieldByFieldElementComparator().isEqualTo(this.storage);
+        walletRepositoryAssertion.assertThat(allWalletsInStorage).hasSize(2);
+        walletRepositoryAssertion.assertAll();
     }
 }

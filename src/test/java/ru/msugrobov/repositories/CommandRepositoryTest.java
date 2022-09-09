@@ -112,4 +112,16 @@ public class CommandRepositoryTest {
         assertThatThrownBy(() -> this.testRepository.delete(2))
                 .isInstanceOf(IdNotFoundException.class).hasMessageContaining("id");
     }
+
+    @Test
+    @DisplayName("Test for reading all commands from storage")
+    public void readAllTest() {
+        Command testCommand = new Command(2, initPlayer.getId(), "anotherAction", testDate);
+        this.testRepository.create(testCommand);
+        List<Command> allCommandsInStorage = this.testRepository.readAll();
+        transactionRepositoryAssertion.assertThat(allCommandsInStorage)
+                .usingRecursiveFieldByFieldElementComparator().isEqualTo(this.storage);
+        transactionRepositoryAssertion.assertThat(allCommandsInStorage).hasSize(2);
+        transactionRepositoryAssertion.assertAll();
+    }
 }

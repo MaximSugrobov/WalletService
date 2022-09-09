@@ -7,6 +7,7 @@ import ru.msugrobov.exceptions.LoginAlreadyExistsException;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Repository for player entity
@@ -17,6 +18,17 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     private final List<Player> storage;
     public PlayerRepository(List<Player> storage) {
         this.storage = storage;
+    }
+
+    /**
+     * Read information about all players
+     *
+     * @return all entities in storage
+     */
+    public List<Player> readAll() {
+        return this.storage.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     /**

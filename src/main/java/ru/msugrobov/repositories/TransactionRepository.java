@@ -21,6 +21,17 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
     }
 
     /**
+     * Read all transactions
+     *
+     * @return all entities in storage
+     */
+    public List<Transaction> readAll() {
+        return this.storage.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Read information about transaction by its id
      *
      * @param idNumber identifier
