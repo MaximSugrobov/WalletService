@@ -1,7 +1,9 @@
 package ru.msugrobov.services;
 
+import bsh.util.GUIConsoleInterface;
 import ru.msugrobov.entities.Player;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -18,8 +20,6 @@ public interface PlayerServiceInterface {
 
     /**
      * Find player by id
-     *
-     * @return player by id
      */
     Player findById(int id);
 
@@ -36,5 +36,5 @@ public interface PlayerServiceInterface {
     /**
      * Delete player
      */
-    void deletePlayer();
+    void deletePlayer(int id);
 }

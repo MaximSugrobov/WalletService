@@ -1,12 +1,10 @@
 package ru.msugrobov.services.impl;
 
-import bsh.util.JConsole;
 import ru.msugrobov.entities.Player;
+import ru.msugrobov.entities.Role;
 import ru.msugrobov.repositories.PlayerRepository;
 import ru.msugrobov.services.PlayerServiceInterface;
 
-import java.io.BufferedReader;
-import java.io.Reader;
 import java.util.List;
 
 public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
@@ -14,7 +12,10 @@ public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
     private final PlayerRepository playerRepository;
 
     public PlayerServiceInterfaceImpl(PlayerRepository playerRepository) {
-        this.playerRepository = playerRepository;
+        this.playerRepository = playerRepository;Player player = new Player(1, "Maxim",
+                "Sugrobov", "Max", "pass", Role.ADMIN);
+        this.playerRepository.create(player);
+
     }
 
     public List<Player> findAllPlayers() {
@@ -33,7 +34,7 @@ public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
 
     }
 
-    public void deletePlayer() {
-
+    public void deletePlayer(int idNumber) {
+        this.playerRepository.delete(idNumber);
     }
 }
