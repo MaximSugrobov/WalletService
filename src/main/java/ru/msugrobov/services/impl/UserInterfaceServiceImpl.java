@@ -7,6 +7,10 @@ import java.io.Reader;
 
 import bsh.util.JConsole;
 import bsh.util.GUIConsoleInterface;
+import ru.msugrobov.entities.Role;
+import ru.msugrobov.exceptions.IdAlreadyExistsException;
+import ru.msugrobov.exceptions.IdNotFoundException;
+import ru.msugrobov.exceptions.LoginAlreadyExistsException;
 import ru.msugrobov.services.UserInterfaceService;
 
 import javax.swing.*;
@@ -49,7 +53,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
         String viableInputParameters = "1. Player" + newLine +
                 "2. Wallet" + newLine +
                 "3. Transaction" + newLine +
-                "4. Command:" + newLine +
+                "4. Command" + newLine +
                 "(type 'quit' to exit): ";
 
         console.print("Type entity to work with:" + newLine, Color.BLACK);
@@ -95,7 +99,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
         }
     }
 
-    public void playerServiceLoop(GUIConsoleInterface console) {
+    private void playerServiceLoop(GUIConsoleInterface console) {
         Reader input = console.getIn();
         BufferedReader bufferInput = new BufferedReader(input);
 
@@ -119,14 +123,40 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         break;
                     case ("create"):
                     case ("1"):
-                        console.print("Create logic: " + newLine);
+                        console.print("Creating new player" + newLine, Color.BLACK);
+                        console.print("Enter id: ", Color.BLACK);
+                        int idNumber = Integer.parseInt(bufferInput.readLine());
+                        console.print("Enter first name: ", Color.BLACK);
+                        String firstName = bufferInput.readLine();
+                        console.print("Enter last name: ", Color.BLACK);
+                        String lastName = bufferInput.readLine();
+                        console.print("Enter login: ", Color.BLACK);
+                        String login = bufferInput.readLine();
+                        console.print("Enter password: ", Color.BLACK);
+                        String password = bufferInput.readLine();
+                        console.print("Enter role ADMIN or USER: ", Color.BLACK);
+                        Role role = Role.valueOf(bufferInput.readLine().toUpperCase());
+                        try {
+                            playerServiceInterfaceImpl.createPlayer
+                                    (idNumber, firstName, lastName, login, password, role);
+                            console.print("Player successfully created" + newLine, Color.BLACK);
+                            console.print("Press any key to return to the menu ", Color.BLACK);
+                        } catch (IdAlreadyExistsException | LoginAlreadyExistsException exception) {
+                            console.print(exception.getMessage() + newLine, Color.BLACK);
+                            console.print("Press any key to return to the menu ", Color.BLACK);
+                        }
                         break;
                     case ("find"):
                     case ("2"):
                         console.print("Enter id: ", Color.BLACK);
-                        console.print(playerServiceInterfaceImpl
-                                .findById(Integer.parseInt(bufferInput.readLine())) + newLine, Color.BLACK);
-                        console.print("Press any key to return to the menu ", Color.BLACK);
+                        try {
+                            console.print(playerServiceInterfaceImpl
+                                    .findById(Integer.parseInt(bufferInput.readLine())) + newLine, Color.BLACK);
+                            console.print("Press any key to return to the menu ", Color.BLACK);
+                        } catch (IdNotFoundException exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press any key to return to the menu ", Color.BLACK);
+                        }
                         break;
                     case ("find all"):
                     case ("3"):
@@ -135,14 +165,36 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         break;
                     case ("update"):
                     case ("4"):
-                        console.print("Update logic: " + newLine);
+                        console.print("Updating player" + newLine, Color.BLACK);
+                        console.print("Enter id of the player to be updated: ", Color.BLACK);
+                        int idPlayerToBeUpdated = Integer.parseInt(bufferInput.readLine());
+                        console.print("Enter first name: ", Color.BLACK);
+                        String updatedFirstName = bufferInput.readLine();
+                        console.print("Enter last name: ", Color.BLACK);
+                        String updatedLastName = bufferInput.readLine();
+                        console.print("Enter password: ", Color.BLACK);
+                        String updatedPassword = bufferInput.readLine();
+                        try {
+                            playerServiceInterfaceImpl.updatePlayer
+                                    (idPlayerToBeUpdated, updatedFirstName, updatedLastName, updatedPassword);
+                            console.print("Player successfully updated" + newLine, Color.BLACK);
+                            console.print("Press any key to return to the menu ", Color.BLACK);
+                        } catch (IdNotFoundException exception) {
+                            console.print(exception.getMessage() + newLine, Color.BLACK);
+                            console.print("Press any key to return to the menu ", Color.BLACK);
+                        }
                         break;
                     case ("delete"):
                     case ("5"):
                         console.print("Enter id to delete player: ");
-                        playerServiceInterfaceImpl.deletePlayer(Integer.parseInt(bufferInput.readLine()));
-                        console.print("Player successfully deleted" + newLine, Color.BLACK);
-                        console.print("Press any key to return to the menu ", Color.BLACK);
+                        try {
+                            playerServiceInterfaceImpl.deletePlayer(Integer.parseInt(bufferInput.readLine()));
+                            console.print("Player successfully deleted" + newLine, Color.BLACK);
+                            console.print("Press any key to return to the menu ", Color.BLACK);
+                        } catch (IdNotFoundException exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press any key to return to the menu ", Color.BLACK);
+                        }
                         break;
                     case ("menu"):
                         console.print("Type command: " + newLine, Color.BLACK);

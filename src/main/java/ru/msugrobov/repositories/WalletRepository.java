@@ -34,7 +34,7 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @param idNumber identifier
      * @return stored entity by id if exists
      */
-    public Wallet readById(int idNumber) {
+    public Wallet readById(Integer idNumber) {
         return storage.stream()
                 .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
                 .findAny()

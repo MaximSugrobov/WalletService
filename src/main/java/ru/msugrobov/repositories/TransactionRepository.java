@@ -37,7 +37,7 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
      * @param idNumber identifier
      * @return stored entity by id if exists
      */
-    public Transaction readById(int idNumber) {
+    public Transaction readById(Integer idNumber) {
         return this.storage.stream()
                 .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
                 .findAny()

@@ -21,7 +21,7 @@ public interface RepositoryInterface<T> {
      * @param id identifier
      * @return context of the entity
      */
-    T readById(int id);
+    T readById(Integer id);
 
     /**
      * Update context of an entity

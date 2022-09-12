@@ -35,7 +35,7 @@ public class CommandRepository implements RepositoryInterface<Command> {
      * @param idNumber identifier
      * @return stored entity by id if exists
      */
-    public Command readById(int idNumber) {
+    public Command readById(Integer idNumber) {
         return storage.stream()
                 .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
                 .findAny()

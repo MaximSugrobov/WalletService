@@ -1,9 +1,8 @@
 package ru.msugrobov.services;
 
-import bsh.util.GUIConsoleInterface;
 import ru.msugrobov.entities.Player;
+import ru.msugrobov.entities.Role;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -20,21 +19,38 @@ public interface PlayerServiceInterface {
 
     /**
      * Find player by id
+     *
+     * @param id of the player
+     * @return player by id
      */
-    Player findById(int id);
+    Player findById(Integer id);
 
     /**
-     * Create player
+     * Create new player
+     *
+     * @param id of the new player
+     * @param firstName of the new player
+     * @param lastName of the new player
+     * @param login of the new player
+     * @param password of the new player
+     * @param role of the new player
      */
-    void createPlayer();
+    void createPlayer(int id, String firstName, String lastName, String login, String password, Role role);
 
     /**
-     * Update player
+     * Update player by id
+     *
+     * @param id of the updated player
+     * @param updatedFirstName of the player
+     * @param updatedLastName of the player
+     * @param updatedPassword of the player
      */
-    void updatePlayer();
+    void updatePlayer(Integer id, String updatedFirstName, String updatedLastName, String updatedPassword);
 
     /**
-     * Delete player
+     * Delete player by id
+     *
+     * @param id of the deleted player
      */
     void deletePlayer(int id);
 }

@@ -37,9 +37,9 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @param idNumber identifier
      * @return stored entity by id if exists
      */
-    public Player readById(int idNumber) {
+    public Player readById(Integer idNumber) {
         return this.storage.stream()
-                .filter(currentRecord -> currentRecord.getId() == idNumber)
+                .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
                 .findAny()
                 .orElseThrow(() -> new IdNotFoundException(String
                         .format("Player with id %s does not exist", idNumber)));
