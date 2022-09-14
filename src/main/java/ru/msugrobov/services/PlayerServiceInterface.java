@@ -35,7 +35,7 @@ public interface PlayerServiceInterface {
      * @param password of the new player
      * @param role of the new player
      */
-    void createPlayer(int id, String firstName, String lastName, String login, String password, Role role);
+    void createPlayer(Integer id, String firstName, String lastName, String login, String password, Role role);
 
     /**
      * Update player by id

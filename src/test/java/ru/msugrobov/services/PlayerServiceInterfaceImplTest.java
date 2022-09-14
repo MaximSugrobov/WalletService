@@ -72,7 +72,7 @@ public class PlayerServiceInterfaceImplTest {
     @DisplayName("Test for updating player by id via player service")
     public void updateTest() {
         Player testPlayer = new Player(1, "Max", "Snow",
-                "anyLogin", "Pass", Role.USER);
+                null, "Pass", null);
         playerRepositoryMock.create(testPlayer);
         testPlayerService.updatePlayer(1, "Max", "Snow", "Pass");
         Mockito.verify(playerRepositoryMock, Mockito.times(1)).update(1, testPlayer);

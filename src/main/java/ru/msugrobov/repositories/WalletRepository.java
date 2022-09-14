@@ -3,6 +3,7 @@ package ru.msugrobov.repositories;
 import ru.msugrobov.entities.Wallet;
 import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
+import ru.msugrobov.exceptions.PlayerIdAlreadyExistsException;
 
 import java.util.List;
 import java.util.Objects;
@@ -54,7 +55,7 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
             throw new IdAlreadyExistsException(String
                     .format("Wallet with id %s already exists", wallet.getId()));
         } else if (existByPlayerId(wallet)) {
-            throw new IdAlreadyExistsException(String
+            throw new PlayerIdAlreadyExistsException(String
                     .format("Wallet with playerId %s already exists", wallet.getPlayerId()));
         }
     }

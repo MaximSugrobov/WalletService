@@ -4,13 +4,12 @@ import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.math.BigDecimal;
 
 import bsh.util.JConsole;
 import bsh.util.GUIConsoleInterface;
 import ru.msugrobov.entities.Role;
-import ru.msugrobov.exceptions.IdAlreadyExistsException;
-import ru.msugrobov.exceptions.IdNotFoundException;
-import ru.msugrobov.exceptions.LoginAlreadyExistsException;
+import ru.msugrobov.exceptions.*;
 import ru.msugrobov.services.UserInterfaceService;
 
 import javax.swing.*;
@@ -21,9 +20,15 @@ import javax.swing.*;
  */
 public class UserInterfaceServiceImpl implements UserInterfaceService {
     private final PlayerServiceInterfaceImpl playerServiceInterfaceImpl;
+    private final WalletServiceInterfaceImpl walletServiceInterfaceImpl;
+    private final TransactionServiceInterfaceImpl transactionServiceInterfaceImpl;
 
-    public UserInterfaceServiceImpl(PlayerServiceInterfaceImpl playerServiceInterfaceImpl) {
+    public UserInterfaceServiceImpl(PlayerServiceInterfaceImpl playerServiceInterfaceImpl,
+                                    WalletServiceInterfaceImpl walletServiceInterfaceImpl,
+                                    TransactionServiceInterfaceImpl transactionServiceInterfaceImpl) {
         this.playerServiceInterfaceImpl = playerServiceInterfaceImpl;
+        this.walletServiceInterfaceImpl = walletServiceInterfaceImpl;
+        this.transactionServiceInterfaceImpl = transactionServiceInterfaceImpl;
     }
 
     /**
@@ -62,7 +67,6 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
         String line;
         try {
             while ((line = bufferInput.readLine()) != null) {
-                console.print("You typed: " + line + newLine, Color.BLUE);
                 switch (line.toLowerCase()) {
                     case ("quit"):
                         bufferInput.close();
@@ -73,7 +77,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         break;
                     case ("wallet"):
                     case ("2"):
-                        console.print("future logic of walletService");
+                        walletServiceLoop(console);
                         break;
                     case ("transaction"):
                     case ("3"):
@@ -87,8 +91,9 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         console.print("Type entity to work with:" + newLine, Color.BLACK);
                         console.print(viableInputParameters, Color.BLACK);
                         break;
+                    case (";"):
+                        inputLoop(console);
                     default:
-                        console.print("Type entity to work with:" + newLine, Color.BLACK);
                         console.print(String.format("Entity %s does not exist, try again:  " +
                                 newLine + viableInputParameters, line), Color.BLACK);
                 }
@@ -116,7 +121,6 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
         String line;
         try {
             while ((line = bufferInput.readLine()) != null) {
-                console.print("You typed: " + line + newLine, Color.BLUE);
                 switch (line.toLowerCase()) {
                     case ("quit"):
                         bufferInput.close();
@@ -142,8 +146,8 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                             console.print("Player successfully created" + newLine, Color.BLACK);
                             console.print("Press any key to return to the menu ", Color.BLACK);
                         } catch (IdAlreadyExistsException | LoginAlreadyExistsException exception) {
-                            console.print(exception.getMessage() + newLine, Color.BLACK);
-                            console.print("Press any key to return to the menu ", Color.BLACK);
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
                     case ("find"):
@@ -152,16 +156,16 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             console.print(playerServiceInterfaceImpl
                                     .findById(Integer.parseInt(bufferInput.readLine())) + newLine, Color.BLACK);
-                            console.print("Press any key to return to the menu ", Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            console.print("Press any key to return to the menu ", Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
                     case ("find all"):
                     case ("3"):
                         console.print(playerServiceInterfaceImpl.findAllPlayers() + newLine, Color.BLACK);
-                        console.print("Press any key to return to the menu ", Color.BLACK);
+                        console.print("Press ENTER to return to the menu ", Color.BLACK);
                         break;
                     case ("update"):
                     case ("4"):
@@ -178,10 +182,10 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                             playerServiceInterfaceImpl.updatePlayer
                                     (idPlayerToBeUpdated, updatedFirstName, updatedLastName, updatedPassword);
                             console.print("Player successfully updated" + newLine, Color.BLACK);
-                            console.print("Press any key to return to the menu ", Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
-                            console.print(exception.getMessage() + newLine, Color.BLACK);
-                            console.print("Press any key to return to the menu ", Color.BLACK);
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
                     case ("delete"):
@@ -190,10 +194,10 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             playerServiceInterfaceImpl.deletePlayer(Integer.parseInt(bufferInput.readLine()));
                             console.print("Player successfully deleted" + newLine, Color.BLACK);
-                            console.print("Press any key to return to the menu ", Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            console.print("Press any key to return to the menu ", Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
                     case ("menu"):
@@ -202,6 +206,8 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         break;
                     case ("back"):
                         inputLoop(console);
+                    case (";"):
+                        playerServiceLoop(console);
                     default:
                         console.print(String.format("Command %s does not exist, try again:  " +
                                 newLine + viableInputParameters + newLine, line), Color.BLACK);
@@ -209,7 +215,115 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                 }
             }
             bufferInput.close();
-        } catch (IOException exception) {
+        } catch (IOException | IllegalArgumentException exception) {
+            console.print("Invalid input, press ENTER to return to the menu ", Color.RED);
+            exception.printStackTrace();
+        }
+    }
+
+    private void walletServiceLoop(GUIConsoleInterface console) {
+        Reader input = console.getIn();
+        BufferedReader bufferInput = new BufferedReader(input);
+
+        String newLine = System.getProperty("line.separator");
+        String viableInputParameters = "1. Create wallet" + newLine +
+                "2. Find wallet" + newLine +
+                "3. Find all wallets from storage" + newLine +
+                "4. Update wallet" + newLine +
+                "5. Delete wallet" + newLine +
+                "(type 'back' to return to the main menu): ";
+        console.print("Type command: " + newLine, Color.BLACK);
+        console.print(viableInputParameters, Color.BLACK);
+
+        String line;
+        try {
+            while ((line = bufferInput.readLine()) != null) {
+                switch (line.toLowerCase()) {
+                    case ("quit"):
+                        bufferInput.close();
+                        break;
+                    case ("create"):
+                    case ("1"):
+                        console.print("Creating new wallet" + newLine, Color.BLACK);
+                        console.print("Enter id: ", Color.BLACK);
+                        Integer idNumber = Integer.parseInt(bufferInput.readLine());
+                        console.print("Enter id of the player who owns the wallet: ", Color.BLACK);
+                        int playerId = Integer.parseInt(bufferInput.readLine());
+                        console.print("Enter initial wallet balance: ", Color.BLACK);
+                        BigDecimal balance = new BigDecimal(Integer.parseInt(bufferInput.readLine()));
+                        try {
+                            walletServiceInterfaceImpl.createWallet
+                                    (idNumber, playerId, balance);
+                            console.print("Wallet successfully created" + newLine, Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        } catch (PlayerIdAlreadyExistsException | IdAlreadyExistsException | IdNotFoundException
+                                exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        }
+                        break;
+                    case ("find"):
+                    case ("2"):
+                        console.print("Enter id: ", Color.BLACK);
+                        try {
+                            console.print(walletServiceInterfaceImpl
+                                    .findById(Integer.parseInt(bufferInput.readLine())) + newLine, Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        } catch (IdNotFoundException exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        }
+                        break;
+                    case ("find all"):
+                    case ("3"):
+                        console.print(walletServiceInterfaceImpl.findAllWallets() + newLine, Color.BLACK);
+                        console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        break;
+                    case ("update"):
+                    case ("4"):
+                        console.print("Updating wallet" + newLine, Color.BLACK);
+                        console.print("Enter id of the wallet to be updated: ", Color.BLACK);
+                        Integer idWalletToBeUpdated = Integer.parseInt(bufferInput.readLine());
+                        console.print("Enter new wallet balance: ", Color.BLACK);
+                        BigDecimal newBalance = new BigDecimal(Integer.parseInt(bufferInput.readLine()));
+                        try {
+                            walletServiceInterfaceImpl.updateWallet(idWalletToBeUpdated, newBalance);
+                            console.print("Wallet successfully updated" + newLine, Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        } catch (IdNotFoundException | InsufficientBalanceException exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        }
+                        break;
+                    case ("delete"):
+                    case ("5"):
+                        console.print("Enter id to delete wallet: ");
+                        try {
+                            walletServiceInterfaceImpl.deleteWallet(Integer.parseInt(bufferInput.readLine()));
+                            console.print("Wallet successfully deleted" + newLine, Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        } catch (IdNotFoundException exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        }
+                        break;
+                    case ("menu"):
+                        console.print("Type command: " + newLine, Color.BLACK);
+                        console.print(viableInputParameters, Color.BLACK);
+                        break;
+                    case ("back"):
+                        inputLoop(console);
+                    case (";"):
+                        walletServiceLoop(console);
+                    default:
+                        console.print(String.format("Command %s does not exist, try again:  " +
+                                newLine + viableInputParameters + newLine, line), Color.BLACK);
+                        console.print("Type command: ", Color.BLACK);
+                }
+            }
+            bufferInput.close();
+        } catch (IOException | IllegalArgumentException exception) {
+            console.print("Invalid input, press ENTER to return to the menu ", Color.RED);
             exception.printStackTrace();
         }
     }

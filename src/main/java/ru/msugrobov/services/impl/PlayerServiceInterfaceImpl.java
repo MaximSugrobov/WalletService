@@ -13,10 +13,10 @@ import java.util.List;
  */
 public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
 
-    private final PlayerRepository playerRepository;
+    public static PlayerRepository playerRepository;
 
     public PlayerServiceInterfaceImpl(PlayerRepository playerRepository) {
-        this.playerRepository = playerRepository;
+        PlayerServiceInterfaceImpl.playerRepository = playerRepository;
     }
 
     /**
@@ -25,17 +25,17 @@ public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
      * @return all players in storage
      */
     public List<Player> findAllPlayers() {
-        return this.playerRepository.readAll();
+        return playerRepository.readAll();
     }
 
     /**
      * Find player by id
      *
      * @param idNumber of the player
-     * @return player by id
+     * @return player entity by id
      */
     public Player findById(Integer idNumber) {
-        return this.playerRepository.readById(idNumber);
+        return playerRepository.readById(idNumber);
     }
 
     /**
@@ -48,10 +48,10 @@ public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
      * @param password  of the new player
      * @param role      of the new player
      */
-    public void createPlayer(int idNumber, String firstName,
+    public void createPlayer(Integer idNumber, String firstName,
                              String lastName, String login, String password, Role role) {
         Player newPlayer = new Player(idNumber, firstName, lastName, login, password, role);
-        this.playerRepository.create(newPlayer);
+        playerRepository.create(newPlayer);
     }
 
     /**
@@ -64,9 +64,9 @@ public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
      */
     public void updatePlayer(Integer idNumber, String updatedFirstName, String updatedLastName,
                              String updatedPassword) {
-        Player playerToBeUpdated = new Player(idNumber, updatedFirstName, updatedLastName, "anyLogin",
-                updatedPassword, Role.USER);
-        this.playerRepository.update(idNumber, playerToBeUpdated);
+        Player playerToBeUpdated = new Player(idNumber, updatedFirstName, updatedLastName, null,
+                updatedPassword, null);
+        playerRepository.update(idNumber, playerToBeUpdated);
     }
 
     /**
@@ -75,6 +75,6 @@ public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
      * @param idNumber of the deleted player
      */
     public void deletePlayer(int idNumber) {
-        this.playerRepository.delete(idNumber);
+        playerRepository.delete(idNumber);
     }
 }
