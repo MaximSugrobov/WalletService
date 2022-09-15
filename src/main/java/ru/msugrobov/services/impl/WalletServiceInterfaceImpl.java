@@ -65,7 +65,7 @@ public class WalletServiceInterfaceImpl implements WalletServiceInterface {
      */
     public void updateWallet(Integer idNumber, BigDecimal balance) {
         Wallet walletToBeUpdated = this.findById(idNumber);
-        walletToBeUpdated.setBalance(balance);
+        walletRepository.update(idNumber, walletToBeUpdated);
     }
 
     /**

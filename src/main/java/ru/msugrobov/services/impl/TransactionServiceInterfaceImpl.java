@@ -66,10 +66,17 @@ public class TransactionServiceInterfaceImpl implements TransactionServiceInterf
     public void createTransaction(Integer id, int walletId, Type type, BigDecimal value) {
         Wallet walletForTransactionCreation = walletRepositoryForTransactionService.readById(walletId);
         Transaction newTransaction = new Transaction(id, walletId, type, value);
+
         if (type.equals(Type.DEBIT) && (walletForTransactionCreation.getBalance().subtract(value).signum() != -1)) {
             transactionRepository.create(newTransaction);
+            BigDecimal updatedBalance = walletForTransactionCreation.getBalance().subtract(value);
+            walletForTransactionCreation.setBalance(updatedBalance);
+            walletRepositoryForTransactionService.update(walletId, walletForTransactionCreation);
         } else if (type.equals(Type.CREDIT)) {
             transactionRepository.create(newTransaction);
+            BigDecimal updatedBalance = walletForTransactionCreation.getBalance().add(value);
+            walletForTransactionCreation.setBalance(updatedBalance);
+            walletRepositoryForTransactionService.update(walletId, walletForTransactionCreation);
         } else {
             throw new InsufficientBalanceException(String
                     .format("Balance of the wallet %s is not sufficient for this transaction", walletId));
@@ -84,8 +91,40 @@ public class TransactionServiceInterfaceImpl implements TransactionServiceInterf
      */
     public void updateTransaction(Integer idNumber, BigDecimal value) {
         Transaction transactionToUpdate = transactionRepository.readById(idNumber);
-        transactionToUpdate.setValue(value);
-        transactionRepository.update(idNumber, transactionToUpdate);
+        int walletId = transactionToUpdate.getWalletId();
+        Wallet walletForTransactionUpdate = walletRepositoryForTransactionService.readById(walletId);
+        BigDecimal valueDiff = transactionToUpdate.getValue().subtract(value);
+        BigDecimal updatedBalance;
+
+        switch (valueDiff.signum()) {
+            case (1):
+                if (transactionToUpdate.getType().equals(Type.DEBIT)) {
+                    updatedBalance = walletForTransactionUpdate.getBalance().add(valueDiff);
+                } else {
+                    updatedBalance = walletForTransactionUpdate.getBalance().subtract(valueDiff);
+                }
+                walletForTransactionUpdate.setBalance(updatedBalance);
+                transactionToUpdate.setValue(value);
+                transactionRepository.update(idNumber, transactionToUpdate);
+                walletRepositoryForTransactionService.update(walletId, walletForTransactionUpdate);
+                break;
+            case (-1):
+                if (transactionToUpdate.getType().equals(Type.DEBIT) &&
+                        (walletForTransactionUpdate.getBalance().subtract(valueDiff)).signum() != -1) {
+                    updatedBalance = walletForTransactionUpdate.getBalance().add(valueDiff);
+                } else if (transactionToUpdate.getType().equals(Type.CREDIT)) {
+                    updatedBalance = walletForTransactionUpdate.getBalance().subtract(valueDiff);
+                } else {
+                    throw new InsufficientBalanceException(String
+                            .format("Balance of the wallet %s is not sufficient for this transaction",
+                                    walletForTransactionUpdate.getId()));
+                }
+                walletForTransactionUpdate.setBalance(updatedBalance);
+                transactionToUpdate.setValue(value);
+                transactionRepository.update(idNumber, transactionToUpdate);
+                walletRepositoryForTransactionService.update(walletId, walletForTransactionUpdate);
+                break;
+        }
     }
 
     /**
@@ -94,6 +133,18 @@ public class TransactionServiceInterfaceImpl implements TransactionServiceInterf
      * @param idNumber identifier
      */
     public void deleteTransaction(Integer idNumber) {
+        Transaction transactionToDelete = transactionRepository.readById(idNumber);
+        int walletId = transactionToDelete.getWalletId();
+        Wallet walletForTransactionDelete = walletRepositoryForTransactionService.readById(walletId);
+        BigDecimal updatedBalance;
+
+        if (transactionToDelete.getType().equals(Type.DEBIT)) {
+            updatedBalance = walletForTransactionDelete.getBalance().add(transactionToDelete.getValue());
+        } else {
+            updatedBalance = walletForTransactionDelete.getBalance().subtract(transactionToDelete.getValue());
+        }
+        walletForTransactionDelete.setBalance(updatedBalance);
+        walletRepositoryForTransactionService.update(walletId, walletForTransactionDelete);
         transactionRepository.delete(idNumber);
     }
 }

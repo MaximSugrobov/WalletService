@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import bsh.util.JConsole;
 import bsh.util.GUIConsoleInterface;
 import ru.msugrobov.entities.Role;
+import ru.msugrobov.entities.Type;
 import ru.msugrobov.exceptions.*;
 import ru.msugrobov.services.UserInterfaceService;
 
@@ -22,6 +23,10 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
     private final PlayerServiceInterfaceImpl playerServiceInterfaceImpl;
     private final WalletServiceInterfaceImpl walletServiceInterfaceImpl;
     private final TransactionServiceInterfaceImpl transactionServiceInterfaceImpl;
+    private final JFrame frame = new JFrame("Wallet service");
+    private final JConsole console = new JConsole();
+    private final Reader input = console.getIn();
+    private final BufferedReader bufferInput = new BufferedReader(input);
 
     public UserInterfaceServiceImpl(PlayerServiceInterfaceImpl playerServiceInterfaceImpl,
                                     WalletServiceInterfaceImpl walletServiceInterfaceImpl,
@@ -36,9 +41,6 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
      */
     public void start() {
 
-        JFrame frame = new JFrame("Wallet service");
-        JConsole console = new JConsole();
-
         frame.add(console);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 800);
@@ -51,9 +53,6 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
     }
 
     private void inputLoop(GUIConsoleInterface console) {
-        Reader input = console.getIn();
-        BufferedReader bufferInput = new BufferedReader(input);
-
         String newLine = System.getProperty("line.separator");
         String viableInputParameters = "1. Player" + newLine +
                 "2. Wallet" + newLine +
@@ -81,7 +80,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         break;
                     case ("transaction"):
                     case ("3"):
-                        console.print("future logic of transactionService");
+                        transactionServiceLoop(console);
                         break;
                     case ("command"):
                     case ("4"):
@@ -105,13 +104,10 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
     }
 
     private void playerServiceLoop(GUIConsoleInterface console) {
-        Reader input = console.getIn();
-        BufferedReader bufferInput = new BufferedReader(input);
-
         String newLine = System.getProperty("line.separator");
         String viableInputParameters = "1. Create player" + newLine +
                 "2. Find player" + newLine +
-                "3. Find all players from storage" + newLine +
+                "3. Find all players in storage" + newLine +
                 "4. Update player" + newLine +
                 "5. Delete player" + newLine +
                 "(type 'back' to return to the main menu): ";
@@ -217,18 +213,14 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
             bufferInput.close();
         } catch (IOException | IllegalArgumentException exception) {
             console.print("Invalid input, press ENTER to return to the menu ", Color.RED);
-            exception.printStackTrace();
         }
     }
 
     private void walletServiceLoop(GUIConsoleInterface console) {
-        Reader input = console.getIn();
-        BufferedReader bufferInput = new BufferedReader(input);
-
         String newLine = System.getProperty("line.separator");
         String viableInputParameters = "1. Create wallet" + newLine +
                 "2. Find wallet" + newLine +
-                "3. Find all wallets from storage" + newLine +
+                "3. Find all wallets in storage" + newLine +
                 "4. Update wallet" + newLine +
                 "5. Delete wallet" + newLine +
                 "(type 'back' to return to the main menu): ";
@@ -290,7 +282,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                             walletServiceInterfaceImpl.updateWallet(idWalletToBeUpdated, newBalance);
                             console.print("Wallet successfully updated" + newLine, Color.BLACK);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
-                        } catch (IdNotFoundException | InsufficientBalanceException exception) {
+                        } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
@@ -324,7 +316,124 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
             bufferInput.close();
         } catch (IOException | IllegalArgumentException exception) {
             console.print("Invalid input, press ENTER to return to the menu ", Color.RED);
-            exception.printStackTrace();
+        }
+    }
+
+    private void transactionServiceLoop(GUIConsoleInterface console) {
+        String newLine = System.getProperty("line.separator");
+        String viableInputParameters = "1. Create transaction" + newLine +
+                "2. Find transaction" + newLine +
+                "3. Find all transactions in storage" + newLine +
+                "4. Find by wallet id" + newLine +
+                "5. Update transaction" + newLine +
+                "6. Delete transaction" + newLine +
+                "(type 'back' to return to the main menu): ";
+        console.print("Type command: " + newLine, Color.BLACK);
+        console.print(viableInputParameters, Color.BLACK);
+
+        String line;
+        try {
+            while ((line = bufferInput.readLine()) != null) {
+                switch (line.toLowerCase()) {
+                    case ("quit"):
+                        bufferInput.close();
+                        break;
+                    case ("create"):
+                    case ("1"):
+                        console.print("Creating new transaction" + newLine, Color.BLACK);
+                        console.print("Enter id: ", Color.BLACK);
+                        Integer idNumber = Integer.parseInt(bufferInput.readLine());
+                        console.print("Enter id of the wallet: ", Color.BLACK);
+                        int walletId = Integer.parseInt(bufferInput.readLine());
+                        console.print("Enter type DEBIT or CREDIT: ", Color.BLACK);
+                        Type type = Type.valueOf(bufferInput.readLine().toUpperCase());
+                        console.print("Enter value of the transaction: ", Color.BLACK);
+                        BigDecimal value = new BigDecimal(Integer.parseInt(bufferInput.readLine()));
+                        try {
+                            transactionServiceInterfaceImpl.createTransaction
+                                    (idNumber, walletId, type, value);
+                            console.print("Transaction successfully created" + newLine, Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        } catch (IdAlreadyExistsException | IdNotFoundException |
+                                 InsufficientBalanceException exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        }
+                        break;
+                    case ("find"):
+                    case ("2"):
+                        console.print("Enter id: ", Color.BLACK);
+                        try {
+                            console.print(transactionServiceInterfaceImpl
+                                    .findById(Integer.parseInt(bufferInput.readLine())) + newLine, Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        } catch (IdNotFoundException exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        }
+                        break;
+                    case ("find all"):
+                    case ("3"):
+                        console.print(transactionServiceInterfaceImpl.findAllTransactions() + newLine, Color.BLACK);
+                        console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        break;
+                    case ("find by wallet"):
+                    case ("4"):
+                        console.print("Enter wallet id: ", Color.BLACK);
+                        try {
+                            console.print(transactionServiceInterfaceImpl
+                                    .findAllTransactionsByWalletId(Integer.parseInt(bufferInput.readLine())) + 
+                                    newLine, Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        } catch (IdNotFoundException exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        }
+                        break;
+                    case ("update"):
+                    case ("5"):
+                        console.print("Updating transaction" + newLine, Color.BLACK);
+                        console.print("Enter id of the transaction to be updated: ", Color.BLACK);
+                        Integer idTransactionToBeUpdated = Integer.parseInt(bufferInput.readLine());
+                        console.print("Enter new transaction value: ", Color.BLACK);
+                        BigDecimal newValue = new BigDecimal(Integer.parseInt(bufferInput.readLine()));
+                        try {
+                            transactionServiceInterfaceImpl.updateTransaction(idTransactionToBeUpdated, newValue);
+                            console.print("Transaction successfully updated" + newLine, Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        } catch (IdNotFoundException | InsufficientBalanceException exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        }
+                        break;
+                    case ("delete"):
+                    case ("6"):
+                        console.print("Enter id to delete transaction: ");
+                        try {
+                            transactionServiceInterfaceImpl.deleteTransaction(Integer.parseInt(bufferInput.readLine()));
+                            console.print("Transaction successfully deleted" + newLine, Color.BLACK);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        } catch (IdNotFoundException exception) {
+                            console.print(exception.getMessage() + newLine, Color.RED);
+                            console.print("Press ENTER to return to the menu ", Color.BLACK);
+                        }
+                        break;
+                    case ("menu"):
+                        console.print("Type command: " + newLine, Color.BLACK);
+                        console.print(viableInputParameters, Color.BLACK);
+                        break;
+                    case ("back"):
+                        inputLoop(console);
+                    case (";"):
+                        transactionServiceLoop(console);
+                    default:
+                        console.print(String.format("Command %s does not exist, try again:  " +
+                                newLine + viableInputParameters + newLine, line), Color.BLACK);
+                        console.print("Type command: ", Color.BLACK);
+                }
+            }
+        } catch (IOException | IllegalArgumentException exception) {
+            console.print("Invalid input, press ENTER to return to the menu ", Color.RED);
         }
     }
 }
