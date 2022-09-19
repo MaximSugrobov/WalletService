@@ -117,4 +117,16 @@ public class TransactionRepositoryTest {
         assertThatThrownBy(() -> this.testRepository.delete(2))
                 .isInstanceOf(IdNotFoundException.class).hasMessageContaining("id");
     }
+
+    @Test
+    @DisplayName("Test for reading all transactions from storage")
+    public void readAllTest() {
+        Transaction newTransaction = new Transaction(2, initWallet.getId(), Type.CREDIT, new BigDecimal(1000));
+        this.testRepository.create(newTransaction);
+        List<Transaction> allTransactionsInStorage = this.testRepository.readAll();
+        transactionRepositoryAssertion.assertThat(allTransactionsInStorage)
+                .usingRecursiveFieldByFieldElementComparator().isEqualTo(this.storage);
+        transactionRepositoryAssertion.assertThat(allTransactionsInStorage).hasSize(2);
+        transactionRepositoryAssertion.assertAll();
+    }
 }

@@ -121,4 +121,17 @@ public class PlayerRepositoryTest {
         assertThatThrownBy(() -> this.testRepository.delete(2))
                 .isInstanceOf(IdNotFoundException.class).hasMessageContaining("id");
     }
+
+    @Test
+    @DisplayName("Test for reading all players from storage")
+    public void readAllTest() {
+        Player newPlayer = new Player(2, "Someone", "Sometwo",
+                "Somelogin", "Somepass", Role.USER);
+        this.testRepository.create(newPlayer);
+        List<Player> allPlayersInStorage = this.testRepository.readAll();
+        playerRepositoryAssertion.assertThat(allPlayersInStorage)
+                .usingRecursiveFieldByFieldElementComparator().isEqualTo(this.storage);
+        playerRepositoryAssertion.assertThat(allPlayersInStorage).hasSize(2);
+        playerRepositoryAssertion.assertAll();
+    }
 }

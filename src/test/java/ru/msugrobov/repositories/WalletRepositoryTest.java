@@ -5,11 +5,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import ru.msugrobov.entities.Player;
-import ru.msugrobov.entities.Wallet;
-import ru.msugrobov.entities.Role;
+import ru.msugrobov.entities.*;
 import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
+import ru.msugrobov.exceptions.PlayerIdAlreadyExistsException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -61,7 +60,7 @@ public class WalletRepositoryTest {
     public void createWalletWithExistingPlayerIdTest(){
         Wallet walletWithExistingPlayerId = new Wallet(2, 1, new BigDecimal(10000));
         walletRepositoryAssertion.assertThatThrownBy(() -> this.testRepository.create(walletWithExistingPlayerId))
-                .isInstanceOf(IdAlreadyExistsException.class).hasMessageContaining("playerId");
+                .isInstanceOf(PlayerIdAlreadyExistsException.class).hasMessageContaining("playerId");
         walletRepositoryAssertion.assertThat(storage).hasSize(1);
         walletRepositoryAssertion.assertAll();
     }
@@ -116,5 +115,17 @@ public class WalletRepositoryTest {
     public void deleteByNotExistingIdTest() {
         assertThatThrownBy(() -> this.testRepository.delete(2))
                 .isInstanceOf(IdNotFoundException.class).hasMessageContaining("id");
+    }
+
+    @Test
+    @DisplayName("Test for reading all wallets from storage")
+    public void readAllTest() {
+        Wallet wallet = new Wallet(2, 2, new BigDecimal(10000));
+        this.testRepository.create(wallet);
+        List<Wallet> allWalletsInStorage = this.testRepository.readAll();
+        walletRepositoryAssertion.assertThat(allWalletsInStorage)
+                .usingRecursiveFieldByFieldElementComparator().isEqualTo(this.storage);
+        walletRepositoryAssertion.assertThat(allWalletsInStorage).hasSize(2);
+        walletRepositoryAssertion.assertAll();
     }
 }

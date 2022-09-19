@@ -1,5 +1,7 @@
 package ru.msugrobov.repositories;
 
+import java.util.List;
+
 /**
  * Describes contract for interaction with repositories
  *
@@ -19,7 +21,7 @@ public interface RepositoryInterface<T> {
      * @param id identifier
      * @return context of the entity
      */
-    T readById(int id);
+    T readById(Integer id);
 
     /**
      * Update context of an entity
@@ -35,4 +37,11 @@ public interface RepositoryInterface<T> {
      * @param id identifier
      */
     void delete(int id);
+
+    /**
+     * Read all entities in storage
+     *
+     * @return all entities in storage
+     */
+    List<T> readAll();
 }

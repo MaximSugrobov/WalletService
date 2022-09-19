@@ -3,9 +3,11 @@ package ru.msugrobov.repositories;
 import ru.msugrobov.entities.Wallet;
 import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
+import ru.msugrobov.exceptions.PlayerIdAlreadyExistsException;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Repository for wallet entity
@@ -17,12 +19,23 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
     public WalletRepository(List<Wallet> storage) { this.storage = storage; }
 
     /**
+     * Read all wallets
+     *
+     * @return all entities in storage
+     */
+    public List<Wallet> readAll() {
+        return this.storage.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Read information about wallet by its id
      *
      * @param idNumber identifier
      * @return stored entity by id if exists
      */
-    public Wallet readById(int idNumber) {
+    public Wallet readById(Integer idNumber) {
         return storage.stream()
                 .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
                 .findAny()
@@ -42,7 +55,7 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
             throw new IdAlreadyExistsException(String
                     .format("Wallet with id %s already exists", wallet.getId()));
         } else if (existByPlayerId(wallet)) {
-            throw new IdAlreadyExistsException(String
+            throw new PlayerIdAlreadyExistsException(String
                     .format("Wallet with playerId %s already exists", wallet.getPlayerId()));
         }
     }

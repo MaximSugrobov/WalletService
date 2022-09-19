@@ -7,6 +7,7 @@ import ru.msugrobov.exceptions.LoginAlreadyExistsException;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Repository for player entity
@@ -20,14 +21,25 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     }
 
     /**
+     * Read information about all players
+     *
+     * @return all entities in storage
+     */
+    public List<Player> readAll() {
+        return this.storage.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Read information about player by its id
      *
      * @param idNumber identifier
      * @return stored entity by id if exists
      */
-    public Player readById(int idNumber) {
+    public Player readById(Integer idNumber) {
         return this.storage.stream()
-                .filter(currentRecord -> currentRecord.getId() == idNumber)
+                .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
                 .findAny()
                 .orElseThrow(() -> new IdNotFoundException(String
                         .format("Player with id %s does not exist", idNumber)));

@@ -19,12 +19,23 @@ public class CommandRepository implements RepositoryInterface<Command> {
     public CommandRepository(List<Command> storage) {this.storage = storage;}
 
     /**
+     * Read all commands
+     *
+     * @return all entities in storage
+     */
+    public List<Command> readAll() {
+        return this.storage.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Read information about command if exists
      *
      * @param idNumber identifier
      * @return stored entity by id if exists
      */
-    public Command readById(int idNumber) {
+    public Command readById(Integer idNumber) {
         return storage.stream()
                 .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
                 .findAny()
