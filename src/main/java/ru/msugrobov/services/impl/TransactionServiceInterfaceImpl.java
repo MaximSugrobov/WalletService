@@ -1,9 +1,9 @@
 package ru.msugrobov.services.impl;
 
+import ru.msugrobov.entities.Direction;
 import ru.msugrobov.entities.Transaction;
 import ru.msugrobov.entities.Type;
 import ru.msugrobov.entities.Wallet;
-import ru.msugrobov.exceptions.InsufficientBalanceException;
 import ru.msugrobov.repositories.TransactionRepository;
 import ru.msugrobov.repositories.WalletRepository;
 import ru.msugrobov.services.TransactionServiceInterface;
@@ -66,21 +66,15 @@ public class TransactionServiceInterfaceImpl implements TransactionServiceInterf
     public void createTransaction(Integer id, int walletId, Type type, BigDecimal value) {
         Wallet walletForTransactionCreation = walletRepositoryForTransactionService.readById(walletId);
         Transaction newTransaction = new Transaction(id, walletId, type, value);
+        Direction direction;
 
-        if (type.equals(Type.DEBIT) && (walletForTransactionCreation.getBalance().subtract(value).signum() != -1)) {
-            transactionRepository.create(newTransaction);
-            BigDecimal updatedBalance = walletForTransactionCreation.getBalance().subtract(value);
-            walletForTransactionCreation.setBalance(updatedBalance);
-            walletRepositoryForTransactionService.update(walletId, walletForTransactionCreation);
-        } else if (type.equals(Type.CREDIT)) {
-            transactionRepository.create(newTransaction);
-            BigDecimal updatedBalance = walletForTransactionCreation.getBalance().add(value);
-            walletForTransactionCreation.setBalance(updatedBalance);
-            walletRepositoryForTransactionService.update(walletId, walletForTransactionCreation);
+        if (type.equals(Type.DEBIT)) {
+            direction = Direction.NEGATIVE;
         } else {
-            throw new InsufficientBalanceException(String
-                    .format("Balance of the wallet %s is not sufficient for this transaction", walletId));
+            direction = Direction.POSITIVE;
         }
+        walletForTransactionCreation.updateBalance(direction, value);
+        transactionRepository.create(newTransaction);
     }
 
     /**
@@ -94,35 +88,28 @@ public class TransactionServiceInterfaceImpl implements TransactionServiceInterf
         int walletId = transactionToUpdate.getWalletId();
         Wallet walletForTransactionUpdate = walletRepositoryForTransactionService.readById(walletId);
         BigDecimal valueDiff = transactionToUpdate.getValue().subtract(value);
-        BigDecimal updatedBalance;
+        Direction direction;
 
         switch (valueDiff.signum()) {
             case (1):
                 if (transactionToUpdate.getType().equals(Type.DEBIT)) {
-                    updatedBalance = walletForTransactionUpdate.getBalance().add(valueDiff);
+                    direction = Direction.POSITIVE;
                 } else {
-                    updatedBalance = walletForTransactionUpdate.getBalance().subtract(valueDiff);
+                    direction = Direction.NEGATIVE;
                 }
-                walletForTransactionUpdate.setBalance(updatedBalance);
                 transactionToUpdate.setValue(value);
                 transactionRepository.update(idNumber, transactionToUpdate);
-                walletRepositoryForTransactionService.update(walletId, walletForTransactionUpdate);
+                walletForTransactionUpdate.updateBalance(direction, valueDiff);
                 break;
             case (-1):
-                if (transactionToUpdate.getType().equals(Type.DEBIT) &&
-                        (walletForTransactionUpdate.getBalance().subtract(valueDiff)).signum() != -1) {
-                    updatedBalance = walletForTransactionUpdate.getBalance().add(valueDiff);
-                } else if (transactionToUpdate.getType().equals(Type.CREDIT)) {
-                    updatedBalance = walletForTransactionUpdate.getBalance().subtract(valueDiff);
+                if (transactionToUpdate.getType().equals(Type.DEBIT)) {
+                    direction = Direction.NEGATIVE;
                 } else {
-                    throw new InsufficientBalanceException(String
-                            .format("Balance of the wallet %s is not sufficient for this transaction",
-                                    walletForTransactionUpdate.getId()));
+                    direction = Direction.POSITIVE;
                 }
-                walletForTransactionUpdate.setBalance(updatedBalance);
+                walletForTransactionUpdate.updateBalance(direction, valueDiff.abs());
                 transactionToUpdate.setValue(value);
                 transactionRepository.update(idNumber, transactionToUpdate);
-                walletRepositoryForTransactionService.update(walletId, walletForTransactionUpdate);
                 break;
         }
     }
@@ -136,15 +123,14 @@ public class TransactionServiceInterfaceImpl implements TransactionServiceInterf
         Transaction transactionToDelete = transactionRepository.readById(idNumber);
         int walletId = transactionToDelete.getWalletId();
         Wallet walletForTransactionDelete = walletRepositoryForTransactionService.readById(walletId);
-        BigDecimal updatedBalance;
+        Direction direction;
 
         if (transactionToDelete.getType().equals(Type.DEBIT)) {
-            updatedBalance = walletForTransactionDelete.getBalance().add(transactionToDelete.getValue());
+            direction = Direction.POSITIVE;
         } else {
-            updatedBalance = walletForTransactionDelete.getBalance().subtract(transactionToDelete.getValue());
+            direction = Direction.NEGATIVE;
         }
-        walletForTransactionDelete.setBalance(updatedBalance);
-        walletRepositoryForTransactionService.update(walletId, walletForTransactionDelete);
+        walletForTransactionDelete.updateBalance(direction, transactionToDelete.getValue());
         transactionRepository.delete(idNumber);
     }
 }

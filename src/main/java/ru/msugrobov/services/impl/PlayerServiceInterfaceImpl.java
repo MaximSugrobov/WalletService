@@ -64,9 +64,10 @@ public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
      */
     public void updatePlayer(Integer idNumber, String updatedFirstName, String updatedLastName,
                              String updatedPassword) {
-        Player playerToBeUpdated = new Player(idNumber, updatedFirstName, updatedLastName, null,
-                updatedPassword, null);
-        playerRepository.update(idNumber, playerToBeUpdated);
+        Player playerToBeUpdated = playerRepository.readById(idNumber);
+        Player updatedPlayer = new Player(idNumber, updatedFirstName, updatedLastName, playerToBeUpdated.getLogin(),
+                updatedPassword, playerToBeUpdated.getRole());
+        playerRepository.update(idNumber, updatedPlayer);
     }
 
     /**
