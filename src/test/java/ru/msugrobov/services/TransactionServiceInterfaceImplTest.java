@@ -45,50 +45,62 @@ public class TransactionServiceInterfaceImplTest {
     public void createTest() {
         when(walletServiceInterfaceImplMock.findById(1)).thenReturn(testWallet);
         when(walletRepositoryMock.readById(1)).thenReturn(testWallet);
-
-        testTransactionService.createTransaction(1, 1, Type.DEBIT, new BigDecimal(5000));
-
         doThrow(IdAlreadyExistsException.class).when(transactionRepositoryMock).create(testTransaction);
         doThrow(InsufficientBalanceException.class).when(transactionRepositoryMock).create(testTransaction);
         doThrow(IdNotFoundException.class).when(transactionRepositoryMock).create(testTransaction);
         doNothing().when(transactionRepositoryMock).create(testTransaction);
+
+        testTransactionService.createTransaction(1, 1, Type.DEBIT, new BigDecimal(5000));
+
         verify(transactionRepositoryMock).create(testTransaction);
     }
 
     @Test
     @DisplayName("Test for finding all transactions via transaction service")
     public void findAllTransactionsTest() {
-        testTransactionService.findAllTransactions();
-        verify(transactionRepositoryMock).readAll();
         doReturn(transactionRepositoryMock.readAll()).when(transactionRepositoryMock).readAll();
+
+        testTransactionService.findAllTransactions();
+
+        verify(transactionRepositoryMock, times(2)).readAll();
     }
 
     @Test
     @DisplayName("Test for finding transaction by id via transaction service")
     public void findByIdTest() {
+        doThrow(IdNotFoundException.class).when(transactionRepositoryMock).readById(2);
+
         testTransactionService.findById(1);
+
         verify(transactionRepositoryMock).readById(1);
-        doThrow(IdNotFoundException.class).when(transactionRepositoryMock).readById(1);
     }
 
     @Test
     @DisplayName("Test for finding transaction by wallet id via transaction service")
     public void findByWalletIdTest() {
+        Wallet walletWithNotExistingPlayerId = new Wallet(2, 2 ,new BigDecimal(10000));
         when(walletRepositoryMock.readById(1)).thenReturn(testWallet);
+        doThrow(IdNotFoundException.class).when(transactionRepositoryMock)
+                .readAllTransactionsByWalletId(walletWithNotExistingPlayerId);
+
         testTransactionService.findAllTransactionsByWalletId(1);
+
         verify(transactionRepositoryMock).readAllTransactionsByWalletId(testWallet);
-        doThrow(IdNotFoundException.class).when(transactionRepositoryMock).readAllTransactionsByWalletId(testWallet);
     }
 
     @Test
     @DisplayName("Test for updating transaction by id via transaction service")
     public void updateTest() {
+        Transaction transactionWithHighValue = new Transaction(2, 1, Type.DEBIT, new BigDecimal(30000));
         when(transactionRepositoryMock.readById(1)).thenReturn(testTransaction);
         when(walletRepositoryMock.readById(1)).thenReturn(testWallet);
+        doThrow(IdNotFoundException.class).when(transactionRepositoryMock).update(2, testTransaction);
+        doThrow(InsufficientBalanceException.class).when(transactionRepositoryMock)
+                .update(1, transactionWithHighValue);
+
         testTransactionService.updateTransaction(1, new BigDecimal(10000));
+
         verify(transactionRepositoryMock).update(1, testTransaction);
-        doThrow(IdNotFoundException.class).when(transactionRepositoryMock).update(1, testTransaction);
-        doThrow(InsufficientBalanceException.class).when(transactionRepositoryMock).update(1, testTransaction);
     }
 
     @Test
@@ -96,8 +108,10 @@ public class TransactionServiceInterfaceImplTest {
     public void deleteTest() {
         when(transactionRepositoryMock.readById(1)).thenReturn(testTransaction);
         when(walletRepositoryMock.readById(1)).thenReturn(testWallet);
+        doThrow(IdNotFoundException.class).when(transactionRepositoryMock).delete(2);
+
         testTransactionService.deleteTransaction(1);
+
         verify(transactionRepositoryMock).delete(1);
-        doThrow(IdNotFoundException.class).when(transactionRepositoryMock).delete(1);
     }
 }

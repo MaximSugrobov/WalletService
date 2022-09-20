@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 public class WalletServiceInterfaceImplTest {
 
     private final WalletRepository walletRepositoryMock = mock(WalletRepository.class);
+    private final Wallet testWallet = new Wallet(1, 1, new BigDecimal(15000));
     private final PlayerRepository playerRepositoryMock = mock(PlayerRepository.class);
     private final PlayerServiceInterfaceImpl playerServiceInterfaceImplMock = mock(PlayerServiceInterfaceImpl.class,
             withSettings().useConstructor(playerRepositoryMock));
@@ -44,48 +45,56 @@ public class WalletServiceInterfaceImplTest {
     public void createTest() {
         Player testPlayer = new Player(1, "Max", "Sugrobov",
                 "Max", "Pass", Role.ADMIN);
-        Wallet testWallet = new Wallet(1, 1, new BigDecimal(15000));
         when(playerServiceInterfaceImplMock.findById(1)).thenReturn(testPlayer);
         when(playerRepositoryMock.readById(1)).thenReturn(testPlayer);
-        testWalletService.createWallet(1, 1, new BigDecimal(15000));
         doThrow(IdAlreadyExistsException.class).when(walletRepositoryMock).create(testWallet);
         doThrow(PlayerIdAlreadyExistsException.class).when(walletRepositoryMock).create(testWallet);
         doThrow(IdNotFoundException.class).when(walletRepositoryMock).create(testWallet);
         doNothing().when(walletRepositoryMock).create(testWallet);
+
+        testWalletService.createWallet(1, 1, new BigDecimal(15000));
+
         verify(walletRepositoryMock).create(testWallet);
     }
 
     @Test
     @DisplayName("Test for finding all wallets via wallet service")
     public void findAllWalletsTest() {
-        testWalletService.findAllWallets();
-        verify(walletRepositoryMock).readAll();
         doReturn(walletRepositoryMock.readAll()).when(walletRepositoryMock).readAll();
+
+        testWalletService.findAllWallets();
+
+        verify(walletRepositoryMock, times(2)).readAll();
     }
 
     @Test
     @DisplayName("Test for finding wallet by id via wallet service")
     public void findByIdTest() {
+        doThrow(IdNotFoundException.class).when(walletRepositoryMock).readById(2);
+
         testWalletService.findById(1);
+
         verify(walletRepositoryMock).readById(1);
-        doThrow(IdNotFoundException.class).when(walletRepositoryMock).readById(1);
     }
 
     @Test
     @DisplayName("Test for updating wallet by id via wallet service")
     public void updateTest() {
-        Wallet testWallet = new Wallet(1, 1, new BigDecimal(15000));
         when(walletRepositoryMock.readById(1)).thenReturn(testWallet);
+        doThrow(IdNotFoundException.class).when(walletRepositoryMock).update(2, testWallet);
+
         testWalletService.updateWallet(1, new BigDecimal(10000));
+
         verify(walletRepositoryMock).update(1, testWallet);
-        doThrow(IdNotFoundException.class).when(walletRepositoryMock).update(1, testWallet);
     }
 
     @Test
     @DisplayName("Test for deleting wallet via wallet service")
     public void deleteTest() {
+        doThrow(IdNotFoundException.class).when(walletRepositoryMock).delete(2);
+
         testWalletService.deleteWallet(1);
+
         verify(walletRepositoryMock).delete(1);
-        doThrow(IdNotFoundException.class).when(walletRepositoryMock).delete(1);
     }
 }
