@@ -28,6 +28,12 @@ public class Wallet {
      */
     private BigDecimal balance;
 
+    /**
+     * Update wallet balance by transaction type and value
+     *
+     * @param direction wallet balance change direction {@link Direction}
+     * @param value value of the transaction {@see Transaction.value}
+     */
     public void updateBalance(Direction direction, BigDecimal value) {
         BigDecimal updatedBalance;
         if (direction.equals(Direction.NEGATIVE) && (this.balance.subtract(value).signum() != -1)) {

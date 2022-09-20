@@ -15,15 +15,11 @@ import ru.msugrobov.repositories.PlayerRepository;
 import ru.msugrobov.services.impl.PlayerServiceInterfaceImpl;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
-
 public class PlayerServiceInterfaceImplTest {
 
-    List<Player> storage = new ArrayList<>();
-    PlayerRepository playerRepositoryMock = mock(PlayerRepository.class,
-            withSettings().useConstructor(storage));
+    private final Player testPlayer = new Player(1, "Max", "Sugrobov",
+            "Max", "Pass", Role.ADMIN);
+    private final PlayerRepository playerRepositoryMock = mock(PlayerRepository.class);
     private final PlayerServiceInterfaceImpl testPlayerService = new PlayerServiceInterfaceImpl(playerRepositoryMock);
     MockitoSession session;
 
@@ -40,30 +36,35 @@ public class PlayerServiceInterfaceImplTest {
     @Test
     @DisplayName("Test for creating player via player service")
     public void createTest() {
-        testPlayerService.createPlayer(1, "Max", "Sugrobov",
-                "Max", "Pass", Role.ADMIN);
-        Player testPlayer = new Player(1, "Max", "Sugrobov",
-                "Max", "Pass", Role.ADMIN);
         doThrow(IdAlreadyExistsException.class).when(playerRepositoryMock).create(testPlayer);
         doThrow(LoginAlreadyExistsException.class).when(playerRepositoryMock).create(testPlayer);
         doNothing().when(playerRepositoryMock).create(testPlayer);
+
+        testPlayerService.createPlayer(1, "Max", "Sugrobov",
+                "Max", "Pass", Role.ADMIN);
+
         verify(playerRepositoryMock).create(testPlayer);
     }
 
     @Test
     @DisplayName("Test for finding all players via player service")
     public void findAllPlayerTest() {
-        testPlayerService.findAllPlayers();
-        verify(playerRepositoryMock).readAll();
         doReturn(playerRepositoryMock.readAll()).when(playerRepositoryMock).readAll();
+
+        testPlayerService.findAllPlayers();
+
+        verify(playerRepositoryMock, times(2)).readAll();
     }
 
     @Test
     @DisplayName("Test for finding player by id via player service")
     public void findByIdTest() {
+        when(playerRepositoryMock.readById(1)).thenReturn(testPlayer);
+        doThrow(IdNotFoundException.class).when(playerRepositoryMock).readById(2);
+
         testPlayerService.findById(1);
+
         verify(playerRepositoryMock).readById(1);
-        doThrow(IdNotFoundException.class).when(playerRepositoryMock).readById(1);
     }
 
     @Test
@@ -72,16 +73,20 @@ public class PlayerServiceInterfaceImplTest {
         Player testPlayer = new Player(1, "Max", "Snow",
                 "SomeLogin", "Pass", Role.USER);
         when(playerRepositoryMock.readById(1)).thenReturn(testPlayer);
+        doThrow(IdNotFoundException.class).when(playerRepositoryMock).update(2, testPlayer);
+
         testPlayerService.updatePlayer(1, "Max", "Snow", "Pass");
+
         verify(playerRepositoryMock).update(1, testPlayer);
-        doThrow(IdNotFoundException.class).when(playerRepositoryMock).update(1, testPlayer);
     }
 
     @Test
     @DisplayName("Test for deleting player via player service")
     public void deleteTest() {
+        doThrow(IdNotFoundException.class).when(playerRepositoryMock).delete(2);
+
         testPlayerService.deletePlayer(1);
+
         verify(playerRepositoryMock).delete(1);
-        doThrow(IdNotFoundException.class).when(playerRepositoryMock).delete(1);
     }
 }
