@@ -17,7 +17,6 @@ public class WalletServiceInterfaceImpl implements WalletServiceInterface {
 
     public static WalletRepository walletRepository;
     private final PlayerRepository playerRepositoryForWalletService = PlayerServiceInterfaceImpl.playerRepository;
-
     public WalletServiceInterfaceImpl(WalletRepository walletRepository) {
         WalletServiceInterfaceImpl.walletRepository = walletRepository;
     }
@@ -39,6 +38,16 @@ public class WalletServiceInterfaceImpl implements WalletServiceInterface {
      */
     public Wallet findById(Integer idNumber) {
         return walletRepository.readById(idNumber);
+    }
+
+    /**
+     * Find wallet by player id
+     *
+     * @param idNumber identifier of the player
+     * @return wallet by player id
+     */
+    public Wallet findByPlayerId(Integer idNumber) {
+        return walletRepository.readByPlayerId(idNumber);
     }
 
     /**

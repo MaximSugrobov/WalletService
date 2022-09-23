@@ -4,6 +4,7 @@ import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
 import ru.msugrobov.entities.Player;
 import ru.msugrobov.exceptions.LoginAlreadyExistsException;
+import ru.msugrobov.exceptions.LoginNotFoundException;
 
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +44,14 @@ public class PlayerRepository implements RepositoryInterface<Player> {
                 .findAny()
                 .orElseThrow(() -> new IdNotFoundException(String
                         .format("Player with id %s does not exist", idNumber)));
+    }
+
+    public Player readByLogin(String login) {
+        return this.storage.stream()
+                .filter(currentRecord -> Objects.equals(currentRecord.getLogin(), login))
+                .findAny()
+                .orElseThrow(() -> new LoginNotFoundException(String
+                        .format("Player with login %s does not exist", login)));
     }
 
     /**

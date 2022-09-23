@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @AllArgsConstructor
-public class Command {
+public class AuditEvent {
     /**
      * Identifier
      */
@@ -32,12 +32,7 @@ public class Command {
     private LocalDateTime dateTime;
 
     /**
-     * Update command info by id
-     *
-     * @param command updated context of the command
+     * Result of the player's action ENUM {@link ActionResult}
      */
-    public void updateFrom(Command command) {
-        this.action = command.getAction();
-        this.dateTime = command.getDateTime();
-    }
+    private ActionResult actionResult;
 }

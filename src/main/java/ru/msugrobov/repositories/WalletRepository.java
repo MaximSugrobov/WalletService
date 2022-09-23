@@ -44,6 +44,20 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
     }
 
     /**
+     * Read information about wallet by player id
+     *
+     * @param idNumber identifier of the player
+     * @return wallet by player id
+     */
+    public Wallet readByPlayerId(Integer idNumber) {
+        return storage.stream()
+                .filter(currentRecord -> Objects.equals(currentRecord.getPlayerId(), idNumber))
+                .findAny()
+                .orElseThrow(() -> new IdNotFoundException(String
+                        .format("Wallet with player id %s does not exist", idNumber)));
+    }
+
+    /**
      * Create new wallet entity
      *
      * @param wallet creates entity if not already exists
