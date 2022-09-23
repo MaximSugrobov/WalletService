@@ -69,7 +69,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
             String playersPassword = bufferInput.readLine();
             try {
                 auditEventServiceInterfaceImpl.authorizeAdmin(playersLogin, playersPassword);
-                Player playerToAuthorize = (Player) ApplicationContext.appContextStorage.get("player");
+                Player playerToAuthorize = ApplicationContext.INSTANCE.get("player", Player.class);
                 if (playerToAuthorize.getRole().equals(Role.ADMIN)) {
                     adminLoop(console, playerToAuthorize.getId(), eventId);
                 } else {

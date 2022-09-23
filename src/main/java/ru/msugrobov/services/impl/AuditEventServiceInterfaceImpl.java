@@ -76,7 +76,7 @@ public class AuditEventServiceInterfaceImpl implements AuditEventServiceInterfac
     public void authorizeAdmin(String login, String password) {
         Player playerToValidateAccess = playerRepositoryForAuditEventService.readByLogin(login);
         if (playerToValidateAccess.getPassword().equals(password)) {
-            ApplicationContext<Object> appContext = ApplicationContext.getContext();
+            ApplicationContext appContext = ApplicationContext.INSTANCE;
             appContext.saveInfo("player", playerToValidateAccess);
         } else {
            throw new CredentialsErrorException(String
