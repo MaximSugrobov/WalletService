@@ -1,37 +1,25 @@
 package ru.msugrobov;
 
-import ru.msugrobov.entities.Player;
+import java.util.HashMap;
 
 /**
  * Singleton for application context
  */
-public class ApplicationContext {
+public class ApplicationContext<T> {
 
-    public static Player authorizedPlayer;
-    private static ApplicationContext INSTANCE;
-    private ApplicationContext() {
-        authorizedPlayer = null;
-    }
-
-    /**
-     * Init singleton
-     *
-     * @return singleton
-     */
-    public static ApplicationContext initInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new ApplicationContext();
-        }
-        return INSTANCE;
-    }
+    public static HashMap<String, Object> appContextStorage = new HashMap<>();
+    public static ApplicationContext<Object> INSTANCE = new ApplicationContext<>();
+    private ApplicationContext(){}
 
     /**
      * Save context to singleton
      *
-     * @param playerToSaveContext entity of the authorized player
+     * @param keyName key for the entity in map
+     * @param entity entity to save
      */
-    public void saveUserInfo(Player playerToSaveContext) {
-        authorizedPlayer = playerToSaveContext;
+    public void saveInfo(String keyName, T entity) {
+
+        appContextStorage.put(keyName, entity);
     }
 
     /**
@@ -39,7 +27,7 @@ public class ApplicationContext {
      *
      * @return entity of the authorized player
      */
-    public static ApplicationContext getContext() {
+    public static ApplicationContext<Object> getContext() {
         return INSTANCE;
     }
 }

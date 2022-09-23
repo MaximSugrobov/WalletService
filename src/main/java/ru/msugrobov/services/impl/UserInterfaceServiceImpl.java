@@ -11,6 +11,7 @@ import bsh.util.JConsole;
 import bsh.util.GUIConsoleInterface;
 import ru.msugrobov.ApplicationContext;
 import ru.msugrobov.entities.ActionResult;
+import ru.msugrobov.entities.Player;
 import ru.msugrobov.entities.Role;
 import ru.msugrobov.entities.Type;
 import ru.msugrobov.exceptions.*;
@@ -68,10 +69,11 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
             String playersPassword = bufferInput.readLine();
             try {
                 auditEventServiceInterfaceImpl.authorizeAdmin(playersLogin, playersPassword);
-                if (ApplicationContext.authorizedPlayer.getRole().equals(Role.ADMIN)) {
-                    adminLoop(console, ApplicationContext.authorizedPlayer.getId(), eventId);
+                Player playerToAuthorize = (Player) ApplicationContext.appContextStorage.get("player");
+                if (playerToAuthorize.getRole().equals(Role.ADMIN)) {
+                    adminLoop(console, playerToAuthorize.getId(), eventId);
                 } else {
-                    userLoop(console, ApplicationContext.authorizedPlayer.getId(), eventId);
+                    userLoop(console, playerToAuthorize.getId(), eventId);
                 }
             } catch (CredentialsErrorException | LoginNotFoundException exception) {
                 console.print(exception.getMessage() + newLine, Color.RED);

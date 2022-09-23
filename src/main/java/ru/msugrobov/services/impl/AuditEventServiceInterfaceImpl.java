@@ -76,8 +76,8 @@ public class AuditEventServiceInterfaceImpl implements AuditEventServiceInterfac
     public void authorizeAdmin(String login, String password) {
         Player playerToValidateAccess = playerRepositoryForAuditEventService.readByLogin(login);
         if (playerToValidateAccess.getPassword().equals(password)) {
-            ApplicationContext appContext = ApplicationContext.initInstance();
-            appContext.saveUserInfo(playerToValidateAccess);
+            ApplicationContext<Object> appContext = ApplicationContext.getContext();
+            appContext.saveInfo("player", playerToValidateAccess);
         } else {
            throw new CredentialsErrorException(String
                    .format("Player with login %s and password %s does not exist", login, password));
