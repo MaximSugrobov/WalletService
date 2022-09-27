@@ -14,7 +14,6 @@ import java.util.List;
 public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
 
     public static PlayerRepository playerRepository;
-
     public PlayerServiceInterfaceImpl(PlayerRepository playerRepository) {
         PlayerServiceInterfaceImpl.playerRepository = playerRepository;
     }

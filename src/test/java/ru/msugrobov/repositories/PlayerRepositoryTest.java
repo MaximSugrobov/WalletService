@@ -10,6 +10,7 @@ import ru.msugrobov.entities.Role;
 import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
 import ru.msugrobov.exceptions.LoginAlreadyExistsException;
+import ru.msugrobov.exceptions.LoginNotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,6 +80,20 @@ public class PlayerRepositoryTest {
     public void readByNotExistingIdTest() {
         assertThatThrownBy(() -> this.testRepository.readById(2))
                 .isInstanceOf(IdNotFoundException.class).hasMessageContaining("id");
+    }
+
+    @Test
+    @DisplayName("Test for reading player by login")
+    public void readyByLoginTest() {
+        Player newPlayer = testRepository.readByLogin("Max");
+        assertThat(newPlayer).usingRecursiveComparison().isEqualTo(this.initPlayer);
+    }
+
+    @Test
+    @DisplayName("Test for reading player by not existing login")
+    public void readByNotExistingLogin() {
+        assertThatThrownBy(() -> this.testRepository.readByLogin("Login"))
+                .isInstanceOf(LoginNotFoundException.class).hasMessageContaining("login");
     }
 
     @Test

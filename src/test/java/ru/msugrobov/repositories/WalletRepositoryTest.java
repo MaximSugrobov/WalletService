@@ -80,6 +80,20 @@ public class WalletRepositoryTest {
     }
 
     @Test
+    @DisplayName("Test for reading wallet info by player id")
+    public void readByPlayerIdTest() {
+        Wallet newWallet = this.testRepository.readByPlayerId(1);
+        assertThat(newWallet).usingRecursiveComparison().isEqualTo(this.initWallet);
+    }
+
+    @Test
+    @DisplayName("Test for reading wallet info by not existing player id")
+    public void readByNotExistingPlayerIdTest() {
+        assertThatThrownBy(() -> this.testRepository.readByPlayerId(2))
+                .isInstanceOf(IdNotFoundException.class).hasMessageContaining("id");
+    }
+
+    @Test
     @DisplayName("Test for updating wallet")
     public void updateTest() {
         Wallet updatedWallet = new Wallet(1, 1, new BigDecimal(20000));

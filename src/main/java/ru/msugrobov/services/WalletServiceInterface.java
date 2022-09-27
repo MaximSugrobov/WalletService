@@ -26,6 +26,14 @@ public interface WalletServiceInterface {
     Wallet findById(Integer id);
 
     /**
+     * Find wallet by player id
+     *
+     * @param id identifier of the player
+     * @return wallet by player id
+     */
+    Wallet findByPlayerId(Integer id);
+
+    /**
      * Create new wallet
      *
      * @param id identifier

@@ -78,6 +78,16 @@ public class WalletServiceInterfaceImplTest {
     }
 
     @Test
+    @DisplayName("Test for finding wallet by player id via wallet service")
+    public void findByPlayerIdTest() {
+        doThrow(IdNotFoundException.class).when(walletRepositoryMock).readById(2);
+
+        testWalletService.findByPlayerId(1);
+
+        verify(walletRepositoryMock).readByPlayerId(1);
+    }
+
+    @Test
     @DisplayName("Test for updating wallet by id via wallet service")
     public void updateTest() {
         when(walletRepositoryMock.readById(1)).thenReturn(testWallet);

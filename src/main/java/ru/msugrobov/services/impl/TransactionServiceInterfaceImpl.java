@@ -18,9 +18,7 @@ import java.util.List;
 public class TransactionServiceInterfaceImpl implements TransactionServiceInterface {
 
     public static TransactionRepository transactionRepository;
-
     private final WalletRepository walletRepositoryForTransactionService = WalletServiceInterfaceImpl.walletRepository;
-
     public TransactionServiceInterfaceImpl(TransactionRepository transactionRepository) {
         TransactionServiceInterfaceImpl.transactionRepository = transactionRepository;
     }
