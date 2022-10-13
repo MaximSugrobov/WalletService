@@ -17,7 +17,6 @@
         <beanshell.version>2.0b6</beanshell.version>
         <mockito.version>4.7.0</mockito.version>
         <postgresql.version>42.5.0</postgresql.version>
-        <oracle.version>21.7.0.0</oracle.version>
         <liquibase.version>4.16.1</liquibase.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -54,11 +53,6 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.oracle.database.jdbc</groupId>
-            <artifactId>ojdbc8</artifactId>
-            <version>${oracle.version}</version>
         </dependency>
         <dependency>
             <groupId>org.liquibase</groupId>
