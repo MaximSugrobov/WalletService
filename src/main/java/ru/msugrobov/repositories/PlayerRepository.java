@@ -35,8 +35,8 @@ public class PlayerRepository implements RepositoryInterface<Player> {
             return allPlayersFromDB;
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
         }
-        return allPlayersFromDB;
     }
 
     /**
@@ -47,7 +47,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      */
     public Player readById(Integer idNumber) {
         String SELECT_PLAYER_BY_ID = "SELECT * FROM players WHERE id=?";
-        Player playerById = null;
+        Player playerById;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_ID);
             statement.setInt(1, idNumber);
@@ -59,13 +59,13 @@ public class PlayerRepository implements RepositoryInterface<Player> {
                     .format("Player with id %s does not exist", idNumber));
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
         }
-        return playerById;
     }
 
     public Player readByLogin(String login) {
         String SELECT_PLAYER_BY_LOGIN = "SELECT * FROM players WHERE login=?";
-        Player playerByLogin = null;
+        Player playerByLogin;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_LOGIN);
             statement.setString(1, login);
@@ -77,8 +77,8 @@ public class PlayerRepository implements RepositoryInterface<Player> {
                     .format("Player with login %s does not exist", login));
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
         }
-        return playerByLogin;
     }
 
     /**
@@ -101,6 +101,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
                 statement.executeUpdate();
             } catch (SQLException | IOException exception) {
                 exception.printStackTrace();
+                throw new DataBaseConnectionException("Database connection error, check properties");
             }
         } else if (existByLogin(player.getLogin())) {
             throw new LoginAlreadyExistsException(String.
@@ -130,6 +131,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
             statement.executeUpdate();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
         }
     }
 
@@ -145,8 +147,9 @@ public class PlayerRepository implements RepositoryInterface<Player> {
             PreparedStatement statement = connection.prepareStatement(DELETE_PLAYER_BY_ID);
             statement.setInt(1, idNumber);
             statement.executeUpdate();
-        } catch (SQLException | IdNotFoundException | IOException exception) {
+        } catch (SQLException | IOException exception) {
             exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
         }
     }
 
@@ -162,6 +165,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
             }
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
         }
         return playerById != null;
     }
@@ -178,6 +182,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
             }
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
         }
         return playerByLogin != null;
     }
@@ -185,7 +190,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     private Player playerFromResultSet(ResultSet resultSet) throws SQLException {
         Player playerFromResultSet;
         String roleFromResultSet = resultSet.getString("role");
-        if (roleFromResultSet.equals(Role.USER.toString()) || roleFromResultSet.equals(Role.ADMIN.toString())) {
+        if (Role.contains(roleFromResultSet)) {
             playerFromResultSet = new Player(resultSet.getInt("id"),
                     resultSet.getString("first_name"),
                     resultSet.getString("last_name"),
@@ -194,6 +199,6 @@ public class PlayerRepository implements RepositoryInterface<Player> {
                     Role.valueOf(resultSet.getString("role").toUpperCase()));
             return playerFromResultSet;
         } else throw new PlayersRoleIsNotCorrectException(String
-                .format("Players role %s is not correct", roleFromResultSet));
+                .format("Player's role %s is not correct", roleFromResultSet));
     }
 }
