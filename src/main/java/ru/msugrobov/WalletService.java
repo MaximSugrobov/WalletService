@@ -23,7 +23,7 @@ public class WalletService {
         Player user = new Player(2, "User", "User", "user", "user", Role.USER);
         playerStorage.add(admin);
         playerStorage.add(user);
-        PlayerRepository playerRepository = new PlayerRepository(playerStorage);
+        PlayerRepository playerRepository = new PlayerRepository();
         PlayerServiceInterfaceImpl playerServiceInterfaceImpl = new PlayerServiceInterfaceImpl(playerRepository);
 
         List<Wallet> walletStorage = new ArrayList<>();
