@@ -7,11 +7,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import ru.msugrobov.entities.Player;
 import ru.msugrobov.entities.Role;
-import ru.msugrobov.exceptions.IdAlreadyExistsException;
-import ru.msugrobov.exceptions.IdNotFoundException;
-import ru.msugrobov.exceptions.LoginAlreadyExistsException;
-import ru.msugrobov.exceptions.LoginNotFoundException;
+import ru.msugrobov.exceptions.*;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +18,6 @@ import static org.assertj.core.api.Assertions.*;
 public class PlayerRepositoryTest {
 
     private final List<Player> storage = new ArrayList<>();
-    String url = "jdbc:postgresql://localhost:5432/WalletServiceDB";
-    String login = "postgres";
-    String password = "postgres";
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(url, login, password);
-    }
     private final PlayerRepository testRepository = new PlayerRepository();
     private Player initPlayer;
     private final SoftAssertions playerRepositoryAssertion = new SoftAssertions();
@@ -40,10 +32,10 @@ public class PlayerRepositoryTest {
     @AfterEach
     public void cleanUpEach() {
         String DELETE_ALL_PLAYERS = "DELETE FROM players";
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(DELETE_ALL_PLAYERS);
             statement.executeUpdate();
-        } catch (SQLException exception) {
+        } catch (SQLException | IOException exception) {
             exception.printStackTrace();
         }
     }

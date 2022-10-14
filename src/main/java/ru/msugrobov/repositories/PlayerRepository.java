@@ -1,12 +1,10 @@
 package ru.msugrobov.repositories;
 
 import ru.msugrobov.entities.Role;
-import ru.msugrobov.exceptions.IdAlreadyExistsException;
-import ru.msugrobov.exceptions.IdNotFoundException;
+import ru.msugrobov.exceptions.*;
 import ru.msugrobov.entities.Player;
-import ru.msugrobov.exceptions.LoginAlreadyExistsException;
-import ru.msugrobov.exceptions.LoginNotFoundException;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,13 +15,7 @@ import java.util.List;
  */
 public class PlayerRepository implements RepositoryInterface<Player> {
 
-    String url = "jdbc:postgresql://localhost:5432/WalletServiceDB";
-    String login = "postgres";
-    String password = "postgres";
     public PlayerRepository() {}
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(url, login, password);
-    }
 
     /**
      * Read information about all players
@@ -33,20 +25,15 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     public List<Player> readAll() {
         String SELECT_ALL_PLAYERS = "SELECT * FROM players";
         List<Player> allPlayersFromDB = new ArrayList<>();
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_ALL_PLAYERS);
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                Player playerFromQuery = new Player(resultSet.getInt("id"),
-                        resultSet.getString("first_name"),
-                        resultSet.getString("last_name"),
-                        resultSet.getString("login"),
-                        resultSet.getString("password"),
-                        Role.valueOf(resultSet.getString("role").toUpperCase()));
+                Player playerFromQuery = playerFromResultSet(resultSet);
                 allPlayersFromDB.add(playerFromQuery);
             }
             return allPlayersFromDB;
-        } catch (SQLException exception) {
+        } catch (SQLException | IOException exception) {
             exception.printStackTrace();
         }
         return allPlayersFromDB;
@@ -61,21 +48,16 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     public Player readById(Integer idNumber) {
         String SELECT_PLAYER_BY_ID = "SELECT * FROM players WHERE id=?";
         Player playerById = null;
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_ID);
             statement.setInt(1, idNumber);
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
-                 playerById = new Player(resultSet.getInt("id"),
-                        resultSet.getString("first_name"),
-                        resultSet.getString("last_name"),
-                        resultSet.getString("login"),
-                        resultSet.getString("password"),
-                        Role.valueOf(resultSet.getString("role").toUpperCase()));
+                 playerById = playerFromResultSet(resultSet);
                  return playerById;
             } else throw new IdNotFoundException(String
                     .format("Player with id %s does not exist", idNumber));
-        } catch (SQLException exception) {
+        } catch (SQLException | IOException exception) {
             exception.printStackTrace();
         }
         return playerById;
@@ -84,21 +66,16 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     public Player readByLogin(String login) {
         String SELECT_PLAYER_BY_LOGIN = "SELECT * FROM players WHERE login=?";
         Player playerByLogin = null;
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_LOGIN);
             statement.setString(1, login);
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
-                playerByLogin = new Player(resultSet.getInt("id"),
-                        resultSet.getString("first_name"),
-                        resultSet.getString("last_name"),
-                        resultSet.getString("login"),
-                        resultSet.getString("password"),
-                        Role.valueOf(resultSet.getString("role").toUpperCase()));
+                playerByLogin = playerFromResultSet(resultSet);
                 return playerByLogin;
             } else throw new LoginNotFoundException(String
                     .format("Player with login %s does not exist", login));
-        } catch (SQLException exception) {
+        } catch (SQLException | IOException exception) {
             exception.printStackTrace();
         }
         return playerByLogin;
@@ -113,7 +90,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
         String CREATE_PLAYER = "INSERT INTO players (id, first_name, last_name, login, password, role)" +
                 "values (?, ?, ?, ?, ?, CAST(? AS role))";
         if (!existById(player.getId()) && !existByLogin(player.getLogin())) {
-            try (Connection connection = getConnection()) {
+            try (Connection connection = DBconnection.getConnection()) {
                 PreparedStatement statement = connection.prepareStatement(CREATE_PLAYER);
                 statement.setInt(1, player.getId());
                 statement.setString(2, player.getFirstName());
@@ -122,7 +99,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
                 statement.setString(5, player.getPassword());
                 statement.setString(6, player.getRole().toString());
                 statement.executeUpdate();
-            } catch (SQLException exception) {
+            } catch (SQLException | IOException exception) {
                 exception.printStackTrace();
             }
         } else if (existByLogin(player.getLogin())) {
@@ -144,14 +121,14 @@ public class PlayerRepository implements RepositoryInterface<Player> {
         String UPDATE_PLAYER = "UPDATE players SET id=?, first_name=?, last_name=?, password=?";
         Player findPlayerById = this.readById(idNumber);
         findPlayerById.updateFrom(player);
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(UPDATE_PLAYER);
             statement.setInt(1, findPlayerById.getId());
             statement.setString(2, findPlayerById.getFirstName());
             statement.setString(3, findPlayerById.getLastName());
             statement.setString(4, findPlayerById.getPassword());
             statement.executeUpdate();
-        } catch (SQLException exception) {
+        } catch (SQLException | IOException exception) {
             exception.printStackTrace();
         }
     }
@@ -164,11 +141,11 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     public void delete(int idNumber) {
         String DELETE_PLAYER_BY_ID = "DELETE FROM players WHERE id=?";
         this.readById(idNumber);
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(DELETE_PLAYER_BY_ID);
             statement.setInt(1, idNumber);
             statement.executeUpdate();
-        } catch (SQLException | IdNotFoundException exception) {
+        } catch (SQLException | IdNotFoundException | IOException exception) {
             exception.printStackTrace();
         }
     }
@@ -176,19 +153,14 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     private boolean existById(int idNumber) {
         String SELECT_PLAYER_BY_ID = "SELECT * FROM players WHERE id=?";
         Player playerById = null;
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_ID);
             statement.setInt(1, idNumber);
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
-                playerById = new Player(resultSet.getInt("id"),
-                        resultSet.getString("first_name"),
-                        resultSet.getString("last_name"),
-                        resultSet.getString("login"),
-                        resultSet.getString("password"),
-                        Role.valueOf(resultSet.getString("role").toUpperCase()));
+                playerById = playerFromResultSet(resultSet);
             }
-        } catch (SQLException exception) {
+        } catch (SQLException | IOException exception) {
             exception.printStackTrace();
         }
         return playerById != null;
@@ -197,21 +169,31 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     private boolean existByLogin(String login) {
         String SELECT_PLAYER_BY_LOGIN = "SELECT * FROM players WHERE login=?";
         Player playerByLogin = null;
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_LOGIN);
             statement.setString(1, login);
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
-                playerByLogin = new Player(resultSet.getInt("id"),
-                        resultSet.getString("first_name"),
-                        resultSet.getString("last_name"),
-                        resultSet.getString("login"),
-                        resultSet.getString("password"),
-                        Role.valueOf(resultSet.getString("role").toUpperCase()));
+                playerByLogin = playerFromResultSet(resultSet);
             }
-        } catch (SQLException exception) {
+        } catch (SQLException | IOException exception) {
             exception.printStackTrace();
         }
         return playerByLogin != null;
+    }
+
+    private Player playerFromResultSet(ResultSet resultSet) throws SQLException {
+        Player playerFromResultSet;
+        String roleFromResultSet = resultSet.getString("role");
+        if (roleFromResultSet.equals(Role.USER.toString()) || roleFromResultSet.equals(Role.ADMIN.toString())) {
+            playerFromResultSet = new Player(resultSet.getInt("id"),
+                    resultSet.getString("first_name"),
+                    resultSet.getString("last_name"),
+                    resultSet.getString("login"),
+                    resultSet.getString("password"),
+                    Role.valueOf(resultSet.getString("role").toUpperCase()));
+            return playerFromResultSet;
+        } else throw new PlayersRoleIsNotCorrectException(String
+                .format("Players role %s is not correct", roleFromResultSet));
     }
 }
