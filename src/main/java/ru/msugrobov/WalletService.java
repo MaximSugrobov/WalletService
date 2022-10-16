@@ -18,19 +18,17 @@ public class WalletService {
 
     public static void initUIS() {
 
-        List<Player> playerStorage = new ArrayList<>();
         Player admin = new Player(1, "Maxim", "Sug", "admin", "admin", Role.ADMIN);
         Player user = new Player(2, "User", "User", "user", "user", Role.USER);
-        playerStorage.add(admin);
-        playerStorage.add(user);
         PlayerRepository playerRepository = new PlayerRepository();
+        playerRepository.create(admin);
+        playerRepository.create(user);
         PlayerServiceInterfaceImpl playerServiceInterfaceImpl = new PlayerServiceInterfaceImpl(playerRepository);
 
         WalletRepository walletRepository = new WalletRepository();
         WalletServiceInterfaceImpl walletServiceInterfaceImpl = new WalletServiceInterfaceImpl(walletRepository);
 
-        List<Transaction> transactionStorage = new ArrayList<>();
-        TransactionRepository transactionRepository = new TransactionRepository(transactionStorage);
+        TransactionRepository transactionRepository = new TransactionRepository();
         TransactionServiceInterfaceImpl transactionServiceInterfaceImpl = new TransactionServiceInterfaceImpl
                 (transactionRepository);
 

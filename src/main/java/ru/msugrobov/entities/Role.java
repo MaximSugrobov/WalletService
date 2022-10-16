@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 public enum Role {
         USER, ADMIN;
 
-        static final Set<String> listOfRoles = Arrays.stream(Role.values()).map(Role::name).collect(Collectors.toSet());
+        static final Set<String> setOfRoles = Arrays.stream(Role.values()).map(Role::name).collect(Collectors.toSet());
 
         /**
          * Validate the given string to an ENUM values
@@ -18,7 +18,7 @@ public enum Role {
          * @return true if string equals role
          */
         public static boolean contains(String roleToValidate) {
-                return listOfRoles.contains(roleToValidate);
+                return setOfRoles.contains(roleToValidate);
         }
 }
 

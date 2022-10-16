@@ -150,7 +150,9 @@ public class PlayerRepositoryTest {
         this.testRepository.create(newPlayer);
         this.storage.add(initPlayer);
         this.storage.add(newPlayer);
+
         List<Player> allPlayersInStorage = this.testRepository.readAll();
+
         playerRepositoryAssertion.assertThat(allPlayersInStorage)
                 .usingRecursiveFieldByFieldElementComparator().isEqualTo(this.storage);
         playerRepositoryAssertion.assertThat(allPlayersInStorage).hasSize(2);
