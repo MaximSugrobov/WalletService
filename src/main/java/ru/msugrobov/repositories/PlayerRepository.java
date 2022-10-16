@@ -107,7 +107,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
             throw new LoginAlreadyExistsException(String.
                     format("Player with login %s already exists", player.getLogin()));
         } else if (existById(player.getId())) {
-            throw new IdAlreadyExistsException(String
+            throw new PlayerIdAlreadyExistsException(String
                     .format("Player with id %s already exists", player.getId()));
         }
     }

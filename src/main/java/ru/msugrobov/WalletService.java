@@ -26,8 +26,7 @@ public class WalletService {
         PlayerRepository playerRepository = new PlayerRepository();
         PlayerServiceInterfaceImpl playerServiceInterfaceImpl = new PlayerServiceInterfaceImpl(playerRepository);
 
-        List<Wallet> walletStorage = new ArrayList<>();
-        WalletRepository walletRepository = new WalletRepository(walletStorage);
+        WalletRepository walletRepository = new WalletRepository();
         WalletServiceInterfaceImpl walletServiceInterfaceImpl = new WalletServiceInterfaceImpl(walletRepository);
 
         List<Transaction> transactionStorage = new ArrayList<>();

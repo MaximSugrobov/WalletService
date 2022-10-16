@@ -68,7 +68,7 @@ public class PlayerRepositoryTest {
         Player playerWithExistingId = new Player(1, "Patrik",
                 "Starfish", "Patrik", "678", Role.USER);
         playerRepositoryAssertion.assertThatThrownBy(() -> this.testRepository.create(playerWithExistingId))
-                .isInstanceOf(IdAlreadyExistsException.class).hasMessageContaining("id");
+                .isInstanceOf(PlayerIdAlreadyExistsException.class).hasMessageContaining("id");
         playerRepositoryAssertion.assertThat(this.testRepository.readAll()).hasSize(1);
         playerRepositoryAssertion.assertAll();
     }
