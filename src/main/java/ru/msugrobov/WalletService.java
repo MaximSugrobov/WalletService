@@ -7,9 +7,6 @@ import ru.msugrobov.repositories.TransactionRepository;
 import ru.msugrobov.repositories.WalletRepository;
 import ru.msugrobov.services.impl.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class WalletService {
 
     public static void main(String[] args) {
@@ -32,8 +29,7 @@ public class WalletService {
         TransactionServiceInterfaceImpl transactionServiceInterfaceImpl = new TransactionServiceInterfaceImpl
                 (transactionRepository);
 
-        List<AuditEvent> auditEventStorage = new ArrayList<>();
-        AuditEventRepository auditEventRepository = new AuditEventRepository(auditEventStorage);
+        AuditEventRepository auditEventRepository = new AuditEventRepository();
         AuditEventServiceInterfaceImpl auditEventServiceInterfaceImpl = new AuditEventServiceInterfaceImpl
                 (auditEventRepository);
 

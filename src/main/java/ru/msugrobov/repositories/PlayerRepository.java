@@ -16,6 +16,14 @@ import java.util.List;
 public class PlayerRepository implements RepositoryInterface<Player> {
 
     public PlayerRepository() {}
+    private static final String SELECT_ALL_PLAYERS = "SELECT * FROM players";
+    private static final String SELECT_PLAYER_BY_ID = "SELECT * FROM players WHERE id=?";
+    private static final String SELECT_PLAYER_BY_LOGIN = "SELECT * FROM players WHERE login=?";
+    private static final String CREATE_PLAYER = "INSERT INTO players " +
+            "(id, first_name, last_name, login, password, role)" +
+            "values (?, ?, ?, ?, ?, CAST(? AS role))";
+    private static final String UPDATE_PLAYER = "UPDATE players SET id=?, first_name=?, last_name=?, password=?";
+    private static final String DELETE_PLAYER_BY_ID = "DELETE FROM players WHERE id=?";
 
     /**
      * Read information about all players
@@ -23,7 +31,6 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @return all entities in storage
      */
     public List<Player> readAll() {
-        String SELECT_ALL_PLAYERS = "SELECT * FROM players";
         List<Player> allPlayersFromDB = new ArrayList<>();
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_ALL_PLAYERS);
@@ -46,7 +53,6 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @return stored entity by id if exists
      */
     public Player readById(Integer idNumber) {
-        String SELECT_PLAYER_BY_ID = "SELECT * FROM players WHERE id=?";
         Player playerById;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_ID);
@@ -64,7 +70,6 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     }
 
     public Player readByLogin(String login) {
-        String SELECT_PLAYER_BY_LOGIN = "SELECT * FROM players WHERE login=?";
         Player playerByLogin;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_LOGIN);
@@ -87,8 +92,6 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @param player creates entity if not already exists
      */
     public void create(Player player) {
-        String CREATE_PLAYER = "INSERT INTO players (id, first_name, last_name, login, password, role)" +
-                "values (?, ?, ?, ?, ?, CAST(? AS role))";
         if (!existById(player.getId()) && !existByLogin(player.getLogin())) {
             try (Connection connection = DBconnection.getConnection()) {
                 PreparedStatement statement = connection.prepareStatement(CREATE_PLAYER);
@@ -119,7 +122,6 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @param player   updated context of the entity
      */
     public void update(int idNumber, Player player) {
-        String UPDATE_PLAYER = "UPDATE players SET id=?, first_name=?, last_name=?, password=?";
         Player findPlayerById = this.readById(idNumber);
         findPlayerById.updateFrom(player);
         try (Connection connection = DBconnection.getConnection()) {
@@ -141,7 +143,6 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @param idNumber identifier
      */
     public void delete(int idNumber) {
-        String DELETE_PLAYER_BY_ID = "DELETE FROM players WHERE id=?";
         this.readById(idNumber);
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(DELETE_PLAYER_BY_ID);
@@ -154,43 +155,36 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     }
 
     private boolean existById(int idNumber) {
-        String SELECT_PLAYER_BY_ID = "SELECT * FROM players WHERE id=?";
-        Player playerById = null;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_ID);
             statement.setInt(1, idNumber);
             ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                playerById = playerFromResultSet(resultSet);
-            }
+            return resultSet.next();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
             throw new DataBaseConnectionException("Database connection error, check properties");
         }
-        return playerById != null;
     }
 
     private boolean existByLogin(String login) {
-        String SELECT_PLAYER_BY_LOGIN = "SELECT * FROM players WHERE login=?";
-        Player playerByLogin = null;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_LOGIN);
             statement.setString(1, login);
             ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                playerByLogin = playerFromResultSet(resultSet);
-            }
+            return resultSet.next();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
             throw new DataBaseConnectionException("Database connection error, check properties");
         }
-        return playerByLogin != null;
     }
 
     private Player playerFromResultSet(ResultSet resultSet) throws SQLException {
         Player playerFromResultSet;
         String roleFromResultSet = resultSet.getString("role");
-        if (Role.contains(roleFromResultSet)) {
+        if (!Role.contains(roleFromResultSet)) {
+            throw new PlayersRoleIsNotCorrectException(String
+                    .format("Player's role %s is not correct", roleFromResultSet));
+        } else {
             playerFromResultSet = new Player(resultSet.getInt("id"),
                     resultSet.getString("first_name"),
                     resultSet.getString("last_name"),
@@ -198,7 +192,6 @@ public class PlayerRepository implements RepositoryInterface<Player> {
                     resultSet.getString("password"),
                     Role.valueOf(resultSet.getString("role").toUpperCase()));
             return playerFromResultSet;
-        } else throw new PlayersRoleIsNotCorrectException(String
-                .format("Player's role %s is not correct", roleFromResultSet));
+        }
     }
 }

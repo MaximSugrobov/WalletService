@@ -18,6 +18,12 @@ import java.util.List;
 public class WalletRepository implements RepositoryInterface<Wallet> {
 
     public WalletRepository() {}
+    private static final String SELECT_ALL_WALLETS = "SELECT * FROM wallets";
+    private static final String SELECT_WALLET_BY_ID = "SELECT * FROM wallets WHERE id=?";
+    private static final String SELECT_WALLET_BY_PLAYER_ID = "SELECT * FROM wallets WHERE player_id=?";
+    private static final String CREATE_WALLET = "INSERT INTO wallets (id, player_id, balance) values (?, ?, ?)";
+    private static final String UPDATE_WALLET = "UPDATE wallets SET id=?, balance=?";
+    private static final String DELETE_WALLET_BY_ID = "DELETE FROM wallets WHERE id=?";
 
     /**
      * Read all wallets
@@ -25,7 +31,6 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @return all entities in storage
      */
     public List<Wallet> readAll() {
-        String SELECT_ALL_WALLETS = "SELECT * FROM wallets";
         List<Wallet> allWalletsFromDB = new ArrayList<>();
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_ALL_WALLETS);
@@ -48,7 +53,6 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @return stored entity by id if exists
      */
     public Wallet readById(Integer idNumber) {
-        String SELECT_WALLET_BY_ID = "SELECT * FROM wallets WHERE id=?";
         Wallet walletById;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_WALLET_BY_ID);
@@ -72,7 +76,6 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @return wallet by player id
      */
     public Wallet readByPlayerId(Integer idNumber) {
-        String SELECT_WALLET_BY_PLAYER_ID = "SELECT * FROM wallets WHERE player_id=?";
         Wallet walletByPlayerId;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_WALLET_BY_PLAYER_ID);
@@ -95,7 +98,6 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @param wallet creates entity if not already exists
      */
     public void create(Wallet wallet) {
-        String CREATE_WALLET = "INSERT INTO wallets (id, player_id, balance) values (?, ?, ?)";
         if (!existById(wallet.getId()) && !existByPlayerId(wallet)) {
             try (Connection connection = DBconnection.getConnection()) {
                 PreparedStatement statement = connection.prepareStatement(CREATE_WALLET);
@@ -123,7 +125,6 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @param wallet   updated context of the entity
      */
     public void update(int idNumber, Wallet wallet) {
-        String UPDATE_WALLET = "UPDATE wallets SET id=?, balance=?";
         Wallet findWalletById = this.readById(idNumber);
         findWalletById.setBalance(wallet.getBalance());
         try (Connection connection = DBconnection.getConnection()) {
@@ -143,7 +144,6 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @param idNumber identifier
      */
     public void delete(int idNumber) {
-        String DELETE_WALLET_BY_ID = "DELETE FROM wallets WHERE id=?";
         this.readById(idNumber);
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(DELETE_WALLET_BY_ID);
@@ -156,37 +156,27 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
     }
 
     private boolean existById(int idNumber) {
-        String SELECT_WALLET_BY_ID = "SELECT * FROM wallets WHERE id=?";
-        Wallet walletById = null;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_WALLET_BY_ID);
             statement.setInt(1, idNumber);
             ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                walletById = walletFromResultSet(resultSet);
-            }
+            return resultSet.next();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
             throw new DataBaseConnectionException("Database connection error, check properties");
         }
-        return walletById != null;
     }
 
     private boolean existByPlayerId(Wallet wallet) {
-        String SELECT_WALLET_BY_PLAYER_ID = "SELECT * FROM wallets WHERE player_id=?";
-        Wallet walletByPlayerId = null;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_WALLET_BY_PLAYER_ID);
             statement.setInt(1, wallet.getPlayerId());
             ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                walletByPlayerId = walletFromResultSet(resultSet);
-            }
+            return resultSet.next();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
             throw new DataBaseConnectionException("Database connection error, check properties");
         }
-        return walletByPlayerId != null;
     }
 
     private Wallet walletFromResultSet(ResultSet resultSet) throws SQLException {

@@ -21,6 +21,13 @@ import java.util.List;
 public class TransactionRepository implements RepositoryInterface<Transaction> {
 
     public TransactionRepository() {}
+    private static final String SELECT_ALL_TRANSACTIONS = "SELECT * FROM transactions";
+    private static final String SELECT_TRANSACTION_BY_ID = "SELECT * FROM transactions WHERE id=?";
+    private static final String SELECT_TRANSACTIONS_BY_WALLET_ID = "SELECT * FROM transactions WHERE wallet_id=?";
+    private static final String CREATE_TRANSACTION = "INSERT INTO transactions (id, wallet_id, type, value)" +
+            "values (?, ?, CAST(? AS transaction_type), ?)";
+    private static final String UPDATE_TRANSACTION = "UPDATE transactions SET id=?, value=?";
+    private static final String DELETE_TRANSACTION_BY_ID = "DELETE FROM transactions WHERE id=?";
 
     /**
      * Read all transactions
@@ -28,7 +35,6 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
      * @return all entities in storage
      */
     public List<Transaction> readAll() {
-        String SELECT_ALL_TRANSACTIONS = "SELECT * FROM transactions";
         List<Transaction> allTransactionsFromDB = new ArrayList<>();
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_ALL_TRANSACTIONS);
@@ -51,7 +57,6 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
      * @return stored entity by id if exists
      */
     public Transaction readById(Integer idNumber) {
-        String SELECT_TRANSACTION_BY_ID = "SELECT * FROM transactions WHERE id=?";
         Transaction transactionById;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_TRANSACTION_BY_ID);
@@ -75,7 +80,6 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
      * @return All transactions by wallet
      */
     public List<Transaction> readAllTransactionsByWalletId(Wallet wallet) {
-        String SELECT_TRANSACTIONS_BY_WALLET_ID = "SELECT * FROM transactions WHERE wallet_id=?";
         List<Transaction> transactionsByWalletId = new ArrayList<>();
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_TRANSACTIONS_BY_WALLET_ID);
@@ -101,8 +105,6 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
      * @param transaction creates entity if not already exists
      */
     public void create(Transaction transaction) {
-        String CREATE_TRANSACTION = "INSERT INTO transactions (id, wallet_id, type, value)" +
-                "values (?, ?, CAST(? AS transaction_type), ?)";
         if (!existById(transaction.getId())) {
             try (Connection connection = DBconnection.getConnection()) {
                 PreparedStatement statement = connection.prepareStatement(CREATE_TRANSACTION);
@@ -128,7 +130,6 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
      * @param transaction updated context of the entity
      */
     public void update(int idNumber, Transaction transaction) {
-        String UPDATE_TRANSACTION = "UPDATE transactions SET id=?, value=?";
         Transaction findTransactionById = this.readById(idNumber);
         findTransactionById.setValue(transaction.getValue());
         try (Connection connection = DBconnection.getConnection()) {
@@ -148,7 +149,6 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
      * @param idNumber identifier
      */
     public void delete(int idNumber) {
-        String DELETE_TRANSACTION_BY_ID = "DELETE FROM transactions WHERE id=?";
         this.readById(idNumber);
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(DELETE_TRANSACTION_BY_ID);
@@ -161,32 +161,29 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
     }
 
     private boolean existById(int idNumber) {
-        String SELECT_TRANSACTION_BY_ID = "SELECT * FROM transactions WHERE id=?";
-        Transaction transactionById = null;
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(SELECT_TRANSACTION_BY_ID);
             statement.setInt(1, idNumber);
             ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                transactionById = transactionFromResultSet(resultSet);
-            }
+            return resultSet.next();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
             throw new DataBaseConnectionException("Database connection error, check properties");
         }
-        return transactionById != null;
     }
 
     private Transaction transactionFromResultSet(ResultSet resultSet) throws SQLException {
         Transaction transactionFromResultSet;
         String typeFromResultSet = resultSet.getString("type");
-        if (Type.contains(typeFromResultSet)) {
+        if (!Type.contains(typeFromResultSet)) {
+            throw new TransactionTypeIsNotCorrect(String
+                    .format("Transaction type %s is not correct", typeFromResultSet));
+        } else {
             transactionFromResultSet = new Transaction(resultSet.getInt("id"),
                     resultSet.getInt("wallet_id"),
                     Type.valueOf(resultSet.getString("type").toUpperCase()),
                     resultSet.getBigDecimal("value"));
             return transactionFromResultSet;
-        } else throw new TransactionTypeIsNotCorrect(String
-                .format("Transaction type %s is not correct", typeFromResultSet));
+        }
     }
 }

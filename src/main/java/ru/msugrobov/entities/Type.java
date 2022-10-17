@@ -15,10 +15,10 @@ public enum Type {
     /**
      * Validate the given string to an ENUM values
      *
-     * @param roleToValidate string to validate
-     * @return true if string equals role
+     * @param typeToValidate string to validate
+     * @return true if string equals type
      */
-    public static boolean contains(String roleToValidate) {
-        return setOfTypes.contains(roleToValidate);
+    public static boolean contains(String typeToValidate) {
+        return setOfTypes.contains(typeToValidate);
     }
 }
