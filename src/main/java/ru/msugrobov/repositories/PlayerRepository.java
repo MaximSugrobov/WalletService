@@ -1,14 +1,13 @@
 package ru.msugrobov.repositories;
 
-import ru.msugrobov.exceptions.IdAlreadyExistsException;
-import ru.msugrobov.exceptions.IdNotFoundException;
+import ru.msugrobov.entities.Role;
+import ru.msugrobov.exceptions.*;
 import ru.msugrobov.entities.Player;
-import ru.msugrobov.exceptions.LoginAlreadyExistsException;
-import ru.msugrobov.exceptions.LoginNotFoundException;
 
+import java.io.IOException;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Repository for player entity
@@ -16,10 +15,15 @@ import java.util.stream.Collectors;
  */
 public class PlayerRepository implements RepositoryInterface<Player> {
 
-    private final List<Player> storage;
-    public PlayerRepository(List<Player> storage) {
-        this.storage = storage;
-    }
+    public PlayerRepository() {}
+    private static final String SELECT_ALL_PLAYERS = "SELECT * FROM players";
+    private static final String SELECT_PLAYER_BY_ID = "SELECT * FROM players WHERE id=?";
+    private static final String SELECT_PLAYER_BY_LOGIN = "SELECT * FROM players WHERE login=?";
+    private static final String CREATE_PLAYER = "INSERT INTO players " +
+            "(id, first_name, last_name, login, password, role)" +
+            "values (?, ?, ?, ?, ?, CAST(? AS role))";
+    private static final String UPDATE_PLAYER = "UPDATE players SET id=?, first_name=?, last_name=?, password=?";
+    private static final String DELETE_PLAYER_BY_ID = "DELETE FROM players WHERE id=?";
 
     /**
      * Read information about all players
@@ -27,9 +31,19 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @return all entities in storage
      */
     public List<Player> readAll() {
-        return this.storage.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        List<Player> allPlayersFromDB = new ArrayList<>();
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SELECT_ALL_PLAYERS);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                Player playerFromQuery = playerFromResultSet(resultSet);
+                allPlayersFromDB.add(playerFromQuery);
+            }
+            return allPlayersFromDB;
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     /**
@@ -39,19 +53,37 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @return stored entity by id if exists
      */
     public Player readById(Integer idNumber) {
-        return this.storage.stream()
-                .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
-                .findAny()
-                .orElseThrow(() -> new IdNotFoundException(String
-                        .format("Player with id %s does not exist", idNumber)));
+        Player playerById;
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_ID);
+            statement.setInt(1, idNumber);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                 playerById = playerFromResultSet(resultSet);
+                 return playerById;
+            } else throw new IdNotFoundException(String
+                    .format("Player with id %s does not exist", idNumber));
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     public Player readByLogin(String login) {
-        return this.storage.stream()
-                .filter(currentRecord -> Objects.equals(currentRecord.getLogin(), login))
-                .findAny()
-                .orElseThrow(() -> new LoginNotFoundException(String
-                        .format("Player with login %s does not exist", login)));
+        Player playerByLogin;
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_LOGIN);
+            statement.setString(1, login);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                playerByLogin = playerFromResultSet(resultSet);
+                return playerByLogin;
+            } else throw new LoginNotFoundException(String
+                    .format("Player with login %s does not exist", login));
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     /**
@@ -60,13 +92,25 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @param player creates entity if not already exists
      */
     public void create(Player player) {
-        if (!existByLogin(player.getLogin()) && !existById(player.getId())) {
-            this.storage.add(player);
+        if (!existById(player.getId()) && !existByLogin(player.getLogin())) {
+            try (Connection connection = DBconnection.getConnection()) {
+                PreparedStatement statement = connection.prepareStatement(CREATE_PLAYER);
+                statement.setInt(1, player.getId());
+                statement.setString(2, player.getFirstName());
+                statement.setString(3, player.getLastName());
+                statement.setString(4, player.getLogin());
+                statement.setString(5, player.getPassword());
+                statement.setString(6, player.getRole().toString());
+                statement.executeUpdate();
+            } catch (SQLException | IOException exception) {
+                exception.printStackTrace();
+                throw new DataBaseConnectionException("Database connection error, check properties");
+            }
         } else if (existByLogin(player.getLogin())) {
             throw new LoginAlreadyExistsException(String.
                     format("Player with login %s already exists", player.getLogin()));
         } else if (existById(player.getId())) {
-            throw new IdAlreadyExistsException(String
+            throw new PlayerIdAlreadyExistsException(String
                     .format("Player with id %s already exists", player.getId()));
         }
     }
@@ -80,6 +124,17 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     public void update(int idNumber, Player player) {
         Player findPlayerById = this.readById(idNumber);
         findPlayerById.updateFrom(player);
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(UPDATE_PLAYER);
+            statement.setInt(1, findPlayerById.getId());
+            statement.setString(2, findPlayerById.getFirstName());
+            statement.setString(3, findPlayerById.getLastName());
+            statement.setString(4, findPlayerById.getPassword());
+            statement.executeUpdate();
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     /**
@@ -88,15 +143,55 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @param idNumber identifier
      */
     public void delete(int idNumber) {
-        Player findPlayerById = this.readById(idNumber);
-        storage.remove(findPlayerById);
-    }
-
-    private boolean existByLogin(String login) {
-        return storage.stream().anyMatch(currentRecord -> Objects.equals(currentRecord.getLogin(), login));
+        this.readById(idNumber);
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(DELETE_PLAYER_BY_ID);
+            statement.setInt(1, idNumber);
+            statement.executeUpdate();
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     private boolean existById(int idNumber) {
-        return storage.stream().anyMatch(currentRecord -> Objects.equals(currentRecord.getId(), idNumber));
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_ID);
+            statement.setInt(1, idNumber);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next();
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
+    }
+
+    private boolean existByLogin(String login) {
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_LOGIN);
+            statement.setString(1, login);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next();
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
+    }
+
+    private Player playerFromResultSet(ResultSet resultSet) throws SQLException {
+        Player playerFromResultSet;
+        String roleFromResultSet = resultSet.getString("role");
+        if (!Role.contains(roleFromResultSet)) {
+            throw new PlayersRoleIsNotCorrectException(String
+                    .format("Player's role %s is not correct", roleFromResultSet));
+        } else {
+            playerFromResultSet = new Player(resultSet.getInt("id"),
+                    resultSet.getString("first_name"),
+                    resultSet.getString("last_name"),
+                    resultSet.getString("login"),
+                    resultSet.getString("password"),
+                    Role.valueOf(resultSet.getString("role").toUpperCase()));
+            return playerFromResultSet;
+        }
     }
 }

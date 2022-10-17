@@ -1,13 +1,15 @@
 package ru.msugrobov.repositories;
 
 import ru.msugrobov.entities.Wallet;
-import ru.msugrobov.exceptions.IdAlreadyExistsException;
-import ru.msugrobov.exceptions.IdNotFoundException;
-import ru.msugrobov.exceptions.PlayerIdAlreadyExistsException;
+import ru.msugrobov.exceptions.*;
 
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Repository for wallet entity
@@ -15,8 +17,13 @@ import java.util.stream.Collectors;
  */
 public class WalletRepository implements RepositoryInterface<Wallet> {
 
-    private final List<Wallet> storage;
-    public WalletRepository(List<Wallet> storage) { this.storage = storage; }
+    public WalletRepository() {}
+    private static final String SELECT_ALL_WALLETS = "SELECT * FROM wallets";
+    private static final String SELECT_WALLET_BY_ID = "SELECT * FROM wallets WHERE id=?";
+    private static final String SELECT_WALLET_BY_PLAYER_ID = "SELECT * FROM wallets WHERE player_id=?";
+    private static final String CREATE_WALLET = "INSERT INTO wallets (id, player_id, balance) values (?, ?, ?)";
+    private static final String UPDATE_WALLET = "UPDATE wallets SET id=?, balance=?";
+    private static final String DELETE_WALLET_BY_ID = "DELETE FROM wallets WHERE id=?";
 
     /**
      * Read all wallets
@@ -24,9 +31,19 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @return all entities in storage
      */
     public List<Wallet> readAll() {
-        return this.storage.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        List<Wallet> allWalletsFromDB = new ArrayList<>();
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SELECT_ALL_WALLETS);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                Wallet walletFromQuery = walletFromResultSet(resultSet);
+                allWalletsFromDB.add(walletFromQuery);
+            }
+            return allWalletsFromDB;
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     /**
@@ -36,11 +53,20 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @return stored entity by id if exists
      */
     public Wallet readById(Integer idNumber) {
-        return storage.stream()
-                .filter(currentRecord -> Objects.equals(currentRecord.getId(), idNumber))
-                .findAny()
-                .orElseThrow(() -> new IdNotFoundException(String
-                        .format("Wallet with id %s does not exist", idNumber)));
+        Wallet walletById;
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SELECT_WALLET_BY_ID);
+            statement.setInt(1, idNumber);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                walletById = walletFromResultSet(resultSet);
+                return walletById;
+            } else throw new IdNotFoundException(String
+                    .format("Wallet with id %s does not exist", idNumber));
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     /**
@@ -50,11 +76,20 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @return wallet by player id
      */
     public Wallet readByPlayerId(Integer idNumber) {
-        return storage.stream()
-                .filter(currentRecord -> Objects.equals(currentRecord.getPlayerId(), idNumber))
-                .findAny()
-                .orElseThrow(() -> new IdNotFoundException(String
-                        .format("Wallet with player id %s does not exist", idNumber)));
+        Wallet walletByPlayerId;
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SELECT_WALLET_BY_PLAYER_ID);
+            statement.setInt(1, idNumber);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                walletByPlayerId = walletFromResultSet(resultSet);
+                return walletByPlayerId;
+            } else throw new IdNotFoundException(String
+                    .format("Wallet with playerId %s does not exist", idNumber));
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     /**
@@ -64,7 +99,16 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      */
     public void create(Wallet wallet) {
         if (!existById(wallet.getId()) && !existByPlayerId(wallet)) {
-            this.storage.add(wallet);
+            try (Connection connection = DBconnection.getConnection()) {
+                PreparedStatement statement = connection.prepareStatement(CREATE_WALLET);
+                statement.setInt(1, wallet.getId());
+                statement.setInt(2, wallet.getPlayerId());
+                statement.setBigDecimal(3, wallet.getBalance());
+                statement.executeUpdate();
+            } catch (SQLException | IOException exception) {
+                exception.printStackTrace();
+                throw new DataBaseConnectionException("Database connection error, check properties");
+            }
         } else if (existById(wallet.getId())) {
             throw new IdAlreadyExistsException(String
                     .format("Wallet with id %s already exists", wallet.getId()));
@@ -83,6 +127,15 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
     public void update(int idNumber, Wallet wallet) {
         Wallet findWalletById = this.readById(idNumber);
         findWalletById.setBalance(wallet.getBalance());
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(UPDATE_WALLET);
+            statement.setInt(1, findWalletById.getId());
+            statement.setBigDecimal(2, findWalletById.getBalance());
+            statement.executeUpdate();
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     /**
@@ -91,17 +144,46 @@ public class WalletRepository implements RepositoryInterface<Wallet> {
      * @param idNumber identifier
      */
     public void delete(int idNumber) {
-        Wallet findWalletById = this.readById(idNumber);
-        storage.remove(findWalletById);
+        this.readById(idNumber);
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(DELETE_WALLET_BY_ID);
+            statement.setInt(1, idNumber);
+            statement.executeUpdate();
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     private boolean existById(int idNumber) {
-        return storage.stream().anyMatch(currentRecord -> Objects
-                .equals(currentRecord.getId(), idNumber));
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SELECT_WALLET_BY_ID);
+            statement.setInt(1, idNumber);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next();
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
     }
 
     private boolean existByPlayerId(Wallet wallet) {
-        return storage.stream().anyMatch(currentRecord -> Objects
-                .equals(currentRecord.getPlayerId(), wallet.getPlayerId()));
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(SELECT_WALLET_BY_PLAYER_ID);
+            statement.setInt(1, wallet.getPlayerId());
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next();
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
+        }
+    }
+
+    private Wallet walletFromResultSet(ResultSet resultSet) throws SQLException {
+        Wallet walletFromResultSet;
+        walletFromResultSet = new Wallet(resultSet.getInt("id"),
+                    resultSet.getInt("player_id"),
+                    resultSet.getBigDecimal("balance"));
+        return walletFromResultSet;
     }
 }
