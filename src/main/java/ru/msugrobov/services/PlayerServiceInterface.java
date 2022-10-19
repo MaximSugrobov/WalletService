@@ -1,7 +1,7 @@
 package ru.msugrobov.services;
 
+import ru.msugrobov.DTO.PlayerDTO;
 import ru.msugrobov.entities.Player;
-import ru.msugrobov.entities.Role;
 
 import java.util.List;
 
@@ -28,14 +28,9 @@ public interface PlayerServiceInterface {
     /**
      * Create new player
      *
-     * @param id of the new player
-     * @param firstName of the new player
-     * @param lastName of the new player
-     * @param login of the new player
-     * @param password of the new player
-     * @param role of the new player
+     * @param playerDTO DTO for player creation
      */
-    void createPlayer(Integer id, String firstName, String lastName, String login, String password, Role role);
+    void createPlayer(PlayerDTO playerDTO);
 
     /**
      * Update player by id

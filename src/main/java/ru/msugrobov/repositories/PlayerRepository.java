@@ -20,9 +20,9 @@ public class PlayerRepository implements RepositoryInterface<Player> {
     private static final String SELECT_PLAYER_BY_ID = "SELECT * FROM players WHERE id=?";
     private static final String SELECT_PLAYER_BY_LOGIN = "SELECT * FROM players WHERE login=?";
     private static final String CREATE_PLAYER = "INSERT INTO players " +
-            "(id, first_name, last_name, login, password, role)" +
-            "values (?, ?, ?, ?, ?, CAST(? AS role))";
-    private static final String UPDATE_PLAYER = "UPDATE players SET id=?, first_name=?, last_name=?, password=?";
+            "(first_name, last_name, login, password, role)" +
+            "values (?, ?, ?, ?, CAST(? AS role))";
+    private static final String UPDATE_PLAYER = "UPDATE players SET first_name=?, last_name=?, password=? WHERE id=? ";
     private static final String DELETE_PLAYER_BY_ID = "DELETE FROM players WHERE id=?";
 
     /**
@@ -69,6 +69,12 @@ public class PlayerRepository implements RepositoryInterface<Player> {
         }
     }
 
+    /**
+     * Read information about player by its login
+     *
+     * @param login player's unique login
+     * @return store entity by login if exists
+     */
     public Player readByLogin(String login) {
         Player playerByLogin;
         try (Connection connection = DBconnection.getConnection()) {
@@ -92,26 +98,22 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @param player creates entity if not already exists
      */
     public void create(Player player) {
-        if (!existById(player.getId()) && !existByLogin(player.getLogin())) {
+        if (!existByLogin(player.getLogin())) {
             try (Connection connection = DBconnection.getConnection()) {
                 PreparedStatement statement = connection.prepareStatement(CREATE_PLAYER);
-                statement.setInt(1, player.getId());
-                statement.setString(2, player.getFirstName());
-                statement.setString(3, player.getLastName());
-                statement.setString(4, player.getLogin());
-                statement.setString(5, player.getPassword());
-                statement.setString(6, player.getRole().toString());
+                statement.setString(1, player.getFirstName());
+                statement.setString(2, player.getLastName());
+                statement.setString(3, player.getLogin());
+                statement.setString(4, player.getPassword());
+                statement.setString(5, player.getRole().toString());
                 statement.executeUpdate();
             } catch (SQLException | IOException exception) {
                 exception.printStackTrace();
                 throw new DataBaseConnectionException("Database connection error, check properties");
             }
-        } else if (existByLogin(player.getLogin())) {
+        } else {
             throw new LoginAlreadyExistsException(String.
                     format("Player with login %s already exists", player.getLogin()));
-        } else if (existById(player.getId())) {
-            throw new PlayerIdAlreadyExistsException(String
-                    .format("Player with id %s already exists", player.getId()));
         }
     }
 
@@ -126,10 +128,10 @@ public class PlayerRepository implements RepositoryInterface<Player> {
         findPlayerById.updateFrom(player);
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(UPDATE_PLAYER);
-            statement.setInt(1, findPlayerById.getId());
-            statement.setString(2, findPlayerById.getFirstName());
-            statement.setString(3, findPlayerById.getLastName());
-            statement.setString(4, findPlayerById.getPassword());
+            statement.setString(1, findPlayerById.getFirstName());
+            statement.setString(2, findPlayerById.getLastName());
+            statement.setString(3, findPlayerById.getPassword());
+            statement.setInt(4, findPlayerById.getId());
             statement.executeUpdate();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
@@ -148,18 +150,6 @@ public class PlayerRepository implements RepositoryInterface<Player> {
             PreparedStatement statement = connection.prepareStatement(DELETE_PLAYER_BY_ID);
             statement.setInt(1, idNumber);
             statement.executeUpdate();
-        } catch (SQLException | IOException exception) {
-            exception.printStackTrace();
-            throw new DataBaseConnectionException("Database connection error, check properties");
-        }
-    }
-
-    private boolean existById(int idNumber) {
-        try (Connection connection = DBconnection.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SELECT_PLAYER_BY_ID);
-            statement.setInt(1, idNumber);
-            ResultSet resultSet = statement.executeQuery();
-            return resultSet.next();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
             throw new DataBaseConnectionException("Database connection error, check properties");

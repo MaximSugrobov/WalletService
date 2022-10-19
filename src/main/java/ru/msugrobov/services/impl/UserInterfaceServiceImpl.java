@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import bsh.util.JConsole;
 import bsh.util.GUIConsoleInterface;
 import ru.msugrobov.ApplicationContext;
+import ru.msugrobov.DTO.PlayerDTO;
 import ru.msugrobov.entities.ActionResult;
 import ru.msugrobov.entities.Player;
 import ru.msugrobov.entities.Role;
@@ -268,8 +269,6 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                     case ("1"):
                         String actionCreate = "Create player";
                         console.print("Creating new player" + newLine, Color.BLACK);
-                        console.print("Enter id: ", Color.BLACK);
-                        int idNumber = Integer.parseInt(bufferInput.readLine());
                         console.print("Enter first name: ", Color.BLACK);
                         String firstName = bufferInput.readLine();
                         console.print("Enter last name: ", Color.BLACK);
@@ -281,12 +280,13 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         console.print("Enter role ADMIN or USER: ", Color.BLACK);
                         Role role = Role.valueOf(bufferInput.readLine().toUpperCase());
                         try {
-                            playerServiceInterfaceImpl.createPlayer
-                                    (idNumber, firstName, lastName, login, password, role);
+                            PlayerDTO playerDTOForPlayerCreation = new PlayerDTO
+                                        (firstName, lastName, login, password, role);
+                            playerServiceInterfaceImpl.createPlayer(playerDTOForPlayerCreation);
                             console.print("Player successfully created" + newLine, Color.BLACK);
                             eventId++;
                             auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCreate,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                                        LocalDateTime.now(), ActionResult.SUCCESS);
                             console.print("Press any key to return to the menu ", Color.BLACK);
                         } catch (IdAlreadyExistsException | LoginAlreadyExistsException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);

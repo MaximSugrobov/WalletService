@@ -11,6 +11,13 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 public class AuditEvent {
+    public AuditEvent(int playerId, String action, LocalDateTime dateTime, ActionResult actionResult) {
+        this.playerId = playerId;
+        this.action = action;
+        this.dateTime = dateTime;
+        this.actionResult = actionResult;
+    }
+
     /**
      * Identifier
      */

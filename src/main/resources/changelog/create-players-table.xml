@@ -9,7 +9,7 @@
     <changeSet id="create-players-table-1" author="msugrobov">
         <sql>CREATE TYPE role AS ENUM ('USER', 'ADMIN')</sql>
         <createTable tableName="players">
-            <column autoIncrement="true" name="id" type="int">
+            <column autoIncrement="true" name="id" type="serial">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="first_name" type="varchar(255)"/>

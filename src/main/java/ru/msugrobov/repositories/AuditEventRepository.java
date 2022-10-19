@@ -18,8 +18,8 @@ public class AuditEventRepository {
     private static final String SELECT_EVENT_BY_ID = "SELECT * FROM audit_events WHERE id=?";
     private static final String SELECT_EVENTS_BY_PLAYER_ID = "SELECT * FROM audit_events WHERE player_id=?";
     private static final String CREATE_EVENT = "INSERT INTO audit_events " +
-            "(id, player_id, action, date_time, action_result)" +
-            "values (?, ?, ?, ?, CAST(? AS action_result))";
+            "(player_id, action, date_time, action_result)" +
+            "values (?, ?, ?, CAST(? AS action_result))";
 
     /**
      * Read all events
@@ -97,30 +97,13 @@ public class AuditEventRepository {
      * @param auditEvent creates entity if not already exists
      */
     public void create(AuditEvent auditEvent) {
-        if (!existById(auditEvent.getId())) {
-            try (Connection connection = DBconnection.getConnection()) {
-                PreparedStatement statement = connection.prepareStatement(CREATE_EVENT);
-                statement.setInt(1, auditEvent.getId());
-                statement.setInt(2, auditEvent.getPlayerId());
-                statement.setString(3, auditEvent.getAction());
-                statement.setTimestamp(4, Timestamp.valueOf(auditEvent.getDateTime()));
-                statement.setString(5, auditEvent.getActionResult().toString());
-                statement.executeUpdate();
-            } catch (SQLException | IOException exception) {
-                exception.printStackTrace();
-                throw new DataBaseConnectionException("Database connection error, check properties");
-            }
-        } else {
-            throw new IdAlreadyExistsException(String.format("Event with id %s already exists", auditEvent.getId()));
-        }
-    }
-
-    private boolean existById(int idNumber) {
         try (Connection connection = DBconnection.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SELECT_EVENT_BY_ID);
-            statement.setInt(1, idNumber);
-            ResultSet resultSet = statement.executeQuery();
-            return resultSet.next();
+            PreparedStatement statement = connection.prepareStatement(CREATE_EVENT);
+            statement.setInt(1, auditEvent.getPlayerId());
+            statement.setString(2, auditEvent.getAction());
+            statement.setTimestamp(3, Timestamp.valueOf(auditEvent.getDateTime()));
+            statement.setString(4, auditEvent.getActionResult().toString());
+            statement.executeUpdate();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
             throw new DataBaseConnectionException("Database connection error, check properties");

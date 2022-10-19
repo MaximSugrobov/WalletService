@@ -19,19 +19,19 @@ public class PlayerRepositoryTest {
 
     private final List<Player> storage = new ArrayList<>();
     private final PlayerRepository testRepository = new PlayerRepository();
-    private Player initPlayer;
+    private Player testAdminPlayer;
     private final SoftAssertions playerRepositoryAssertion = new SoftAssertions();
 
     @BeforeEach
     public void initEach() {
-        this.initPlayer = new Player(1, "Maxim", "Sugrobov",
-                "Max", "Pass", Role.ADMIN);
-        this.testRepository.create(initPlayer);
+        this.testAdminPlayer = new Player("Maxim", "Sugrobov",
+                "testAdmin", "admin", Role.ADMIN);
+        this.testRepository.create(testAdminPlayer);
     }
 
     @AfterEach
     public void cleanUpEach() {
-        String DELETE_ALL_PLAYERS = "DELETE FROM players";
+        String DELETE_ALL_PLAYERS = "DELETE FROM players WHERE login <> 'admin'";
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(DELETE_ALL_PLAYERS);
             statement.executeUpdate();
@@ -43,41 +43,36 @@ public class PlayerRepositoryTest {
     @Test
     @DisplayName("Test for creating new player")
     public void createPlayerTest() {
-        Player player = new Player(2, "Maxim", "Sugrobov",
+        Player testPlayer = new Player("Maxim", "Sugrobov",
                 "Snow", "Pass", Role.USER);
-        this.testRepository.create(player);
+
+        this.testRepository.create(testPlayer);
+
         playerRepositoryAssertion.assertThat(this.testRepository).isNotNull();
-        playerRepositoryAssertion.assertThat(this.testRepository.readAll()).hasSize(2);
+        playerRepositoryAssertion.assertThat(this.testRepository.readAll()).hasSize(3);
         playerRepositoryAssertion.assertAll();
     }
 
     @Test
     @DisplayName("Test for creating player with existing login")
     public void createPlayerWithExistingLoginTest() {
-        Player playerWithExistingLogin = new Player(2, "Some",
-                "Surname", "Max", "123", Role.USER);
+        Player playerWithExistingLogin = new Player("Some",
+                "Surname", "admin", "123", Role.USER);
+
         playerRepositoryAssertion.assertThatThrownBy(() -> this.testRepository.create(playerWithExistingLogin))
                 .isInstanceOf(LoginAlreadyExistsException.class).hasMessageContaining("login");
-        playerRepositoryAssertion.assertThat(this.testRepository.readAll()).hasSize(1);
-        playerRepositoryAssertion.assertAll();
-    }
-
-    @Test
-    @DisplayName("Test for creating player with existing Id")
-    public void createPlayerWithExistingIdTest() {
-        Player playerWithExistingId = new Player(1, "Patrik",
-                "Starfish", "Patrik", "678", Role.USER);
-        playerRepositoryAssertion.assertThatThrownBy(() -> this.testRepository.create(playerWithExistingId))
-                .isInstanceOf(PlayerIdAlreadyExistsException.class).hasMessageContaining("id");
-        playerRepositoryAssertion.assertThat(this.testRepository.readAll()).hasSize(1);
+        playerRepositoryAssertion.assertThat(this.testRepository.readAll()).hasSize(2);
         playerRepositoryAssertion.assertAll();
     }
 
     @Test
     @DisplayName("Test for reading player info by id")
     public void readByIdTest() {
+        Player adminPlayer = new Player(1, "Maxim", "Sugrobov",
+                "admin", "admin", Role.ADMIN);
         Player newPlayer = testRepository.readById(1);
-        assertThat(newPlayer).usingRecursiveComparison().isEqualTo(this.initPlayer);
+
+        assertThat(newPlayer).usingRecursiveComparison().isEqualTo(adminPlayer);
     }
 
     @Test
@@ -90,8 +85,11 @@ public class PlayerRepositoryTest {
     @Test
     @DisplayName("Test for reading player by login")
     public void readyByLoginTest() {
-        Player newPlayer = testRepository.readByLogin("Max");
-        assertThat(newPlayer).usingRecursiveComparison().isEqualTo(this.initPlayer);
+        Player adminPlayer = new Player(1, "Maxim", "Sugrobov",
+                "admin", "admin", Role.ADMIN);
+        Player newPlayer = testRepository.readByLogin("admin");
+
+        assertThat(newPlayer).usingRecursiveComparison().isEqualTo(adminPlayer);
     }
 
     @Test
@@ -104,25 +102,31 @@ public class PlayerRepositoryTest {
     @Test
     @DisplayName("Test for updating player")
     public void updateTest() {
-        Player updatedPlayer = new Player(1, "Max", "Snow",
-                "Max", "password", Role.ADMIN);
-        this.testRepository.update(1, updatedPlayer);
-        assertThat(this.testRepository.readById(1)).usingRecursiveComparison().isEqualTo(updatedPlayer);
+        Player updatedPlayer = new Player("Max", "Snow",
+                "testAdmin", "admin", Role.ADMIN);
+        updatedPlayer.setId(this.testRepository.readByLogin("testAdmin").getId());
+
+        this.testRepository.update(this.testRepository.readByLogin("testAdmin").getId(), updatedPlayer);
+
+        assertThat(this.testRepository.readByLogin("testAdmin")).usingRecursiveComparison().isEqualTo(updatedPlayer);
     }
 
     @Test
     @DisplayName("Test for updating player with wrong parameters")
     public void updateWithWrongParametersTest() {
-        Player updatedPlayer = new Player(1, "Max", "Snow",
-                "MaxSnow", "password", Role.ADMIN);
-        this.testRepository.update(1, updatedPlayer);
-        assertThat(this.testRepository.readById(1)).usingRecursiveComparison().isNotEqualTo(updatedPlayer);
+        Player updatedPlayer = new Player("Max", "Snow",
+                "MaxSnow", "admin", Role.ADMIN);
+        updatedPlayer.setId(this.testRepository.readByLogin("testAdmin").getId());
+
+        this.testRepository.update(this.testRepository.readByLogin("testAdmin").getId(), updatedPlayer);
+
+        assertThat(this.testRepository.readByLogin("testAdmin")).usingRecursiveComparison().isNotEqualTo(updatedPlayer);
     }
 
     @Test
     @DisplayName("Test for updating player by not existing id")
     public void updateByNotExistingIdTest() {
-        Player updatedPlayer = new Player(1, "Max", "Snow",
+        Player updatedPlayer = new Player("Max", "Snow",
                 "Max", "password", Role.ADMIN);
         assertThatThrownBy(() -> this.testRepository.update(2, updatedPlayer))
                 .isInstanceOf(IdNotFoundException.class).hasMessageContaining("id");
@@ -131,8 +135,14 @@ public class PlayerRepositoryTest {
     @Test
     @DisplayName("Test for deleting player")
     public void deleteTest() {
-        this.testRepository.delete(1);
-        assertThat(this.testRepository.readAll()).hasSize(0);
+        Player testPlayer = new Player("Maxim", "Sugrobov",
+                "Snow", "Pass", Role.USER);
+        this.testRepository.create(testPlayer);
+        testPlayer.setId(this.testRepository.readByLogin("Snow").getId());
+
+        this.testRepository.delete(testPlayer.getId());
+
+        assertThat(this.testRepository.readAll()).hasSize(2);
     }
 
     @Test
@@ -145,17 +155,22 @@ public class PlayerRepositoryTest {
     @Test
     @DisplayName("Test for reading all players from storage")
     public void readAllTest() {
-        Player newPlayer = new Player(2, "Someone", "Sometwo",
+        Player adminPlayer = new Player(1, "Maxim", "Sugrobov",
+                "admin", "admin", Role.ADMIN);
+        Player newPlayer = new Player("Someone", "Sometwo",
                 "Somelogin", "Somepass", Role.USER);
         this.testRepository.create(newPlayer);
-        this.storage.add(initPlayer);
+        this.testAdminPlayer.setId(this.testRepository.readByLogin("testAdmin").getId());
+        newPlayer.setId(this.testRepository.readByLogin("Somelogin").getId());
+        this.storage.add(testAdminPlayer);
         this.storage.add(newPlayer);
+        this.storage.add(adminPlayer);
 
         List<Player> allPlayersInStorage = this.testRepository.readAll();
 
         playerRepositoryAssertion.assertThat(allPlayersInStorage)
                 .usingRecursiveFieldByFieldElementComparator().isEqualTo(this.storage);
-        playerRepositoryAssertion.assertThat(allPlayersInStorage).hasSize(2);
+        playerRepositoryAssertion.assertThat(allPlayersInStorage).hasSize(3);
         playerRepositoryAssertion.assertAll();
     }
 }

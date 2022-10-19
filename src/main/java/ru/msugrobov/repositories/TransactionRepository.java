@@ -2,7 +2,6 @@ package ru.msugrobov.repositories;
 
 import ru.msugrobov.entities.*;
 import ru.msugrobov.exceptions.DataBaseConnectionException;
-import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
 import ru.msugrobov.exceptions.TransactionTypeIsNotCorrect;
 
@@ -24,8 +23,8 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
     private static final String SELECT_ALL_TRANSACTIONS = "SELECT * FROM transactions";
     private static final String SELECT_TRANSACTION_BY_ID = "SELECT * FROM transactions WHERE id=?";
     private static final String SELECT_TRANSACTIONS_BY_WALLET_ID = "SELECT * FROM transactions WHERE wallet_id=?";
-    private static final String CREATE_TRANSACTION = "INSERT INTO transactions (id, wallet_id, type, value)" +
-            "values (?, ?, CAST(? AS transaction_type), ?)";
+    private static final String CREATE_TRANSACTION = "INSERT INTO transactions (wallet_id, type, value)" +
+            "values (?, CAST(? AS transaction_type), ?)";
     private static final String UPDATE_TRANSACTION = "UPDATE transactions SET id=?, value=?";
     private static final String DELETE_TRANSACTION_BY_ID = "DELETE FROM transactions WHERE id=?";
 
@@ -105,21 +104,15 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
      * @param transaction creates entity if not already exists
      */
     public void create(Transaction transaction) {
-        if (!existById(transaction.getId())) {
-            try (Connection connection = DBconnection.getConnection()) {
-                PreparedStatement statement = connection.prepareStatement(CREATE_TRANSACTION);
-                statement.setInt(1, transaction.getId());
-                statement.setInt(2, transaction.getWalletId());
-                statement.setString(3, transaction.getType().toString());
-                statement.setBigDecimal(4, transaction.getValue());
-                statement.executeUpdate();
-            } catch (SQLException | IOException exception) {
-                exception.printStackTrace();
-                throw new DataBaseConnectionException("Database connection error, check properties");
-            }
-        } else {
-            throw new IdAlreadyExistsException(String
-                    .format("Transaction with id %s already exists", transaction.getId()));
+        try (Connection connection = DBconnection.getConnection()) {
+            PreparedStatement statement = connection.prepareStatement(CREATE_TRANSACTION);
+            statement.setInt(1, transaction.getWalletId());
+            statement.setString(2, transaction.getType().toString());
+            statement.setBigDecimal(3, transaction.getValue());
+            statement.executeUpdate();
+        } catch (SQLException | IOException exception) {
+            exception.printStackTrace();
+            throw new DataBaseConnectionException("Database connection error, check properties");
         }
     }
 
@@ -131,7 +124,7 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
      */
     public void update(int idNumber, Transaction transaction) {
         Transaction findTransactionById = this.readById(idNumber);
-        findTransactionById.setValue(transaction.getValue());
+        findTransactionById.updateFrom(transaction);
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(UPDATE_TRANSACTION);
             statement.setInt(1, findTransactionById.getId());
@@ -154,18 +147,6 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
             PreparedStatement statement = connection.prepareStatement(DELETE_TRANSACTION_BY_ID);
             statement.setInt(1, idNumber);
             statement.executeUpdate();
-        } catch (SQLException | IOException exception) {
-            exception.printStackTrace();
-            throw new DataBaseConnectionException("Database connection error, check properties");
-        }
-    }
-
-    private boolean existById(int idNumber) {
-        try (Connection connection = DBconnection.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(SELECT_TRANSACTION_BY_ID);
-            statement.setInt(1, idNumber);
-            ResultSet resultSet = statement.executeQuery();
-            return resultSet.next();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
             throw new DataBaseConnectionException("Database connection error, check properties");

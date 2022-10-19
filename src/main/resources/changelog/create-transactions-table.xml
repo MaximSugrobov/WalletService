@@ -9,7 +9,7 @@
     <changeSet id="create-transactions-table-1" author="msugrobov">
         <sql>CREATE TYPE transaction_type AS ENUM ('DEBIT', 'CREDIT')</sql>
         <createTable  tableName="transactions">
-            <column autoIncrement="true" name="id" type="int">
+            <column autoIncrement="true" name="id" type="serial">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="wallet_id" type="int">

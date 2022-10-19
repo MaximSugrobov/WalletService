@@ -10,4 +10,6 @@
     <include file="changelog/create-wallets-table.xml" relativeToChangelogFile="true"/>
     <include file="changelog/create-transactions-table.xml" relativeToChangelogFile="true"/>
     <include file="changelog/create-audit_events-table.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/create-superuser.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/create-wallet-superuser.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

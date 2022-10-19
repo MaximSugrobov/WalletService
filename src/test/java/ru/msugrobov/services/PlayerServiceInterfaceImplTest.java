@@ -6,18 +6,20 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.*;
 import org.mockito.MockitoSession;
+import ru.msugrobov.DTO.PlayerDTO;
 import ru.msugrobov.entities.Player;
 import ru.msugrobov.entities.Role;
 import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
 import ru.msugrobov.exceptions.LoginAlreadyExistsException;
+import ru.msugrobov.mapper.PlayerMapper;
 import ru.msugrobov.repositories.PlayerRepository;
 import ru.msugrobov.services.impl.PlayerServiceInterfaceImpl;
 
 
 public class PlayerServiceInterfaceImplTest {
 
-    private final Player testPlayer = new Player(1, "Max", "Sugrobov",
+    private final Player testPlayer = new Player("Max", "Sugrobov",
             "Max", "Pass", Role.ADMIN);
     private final PlayerRepository playerRepositoryMock = mock(PlayerRepository.class);
     private final PlayerServiceInterfaceImpl testPlayerService = new PlayerServiceInterfaceImpl(playerRepositoryMock);
@@ -40,8 +42,9 @@ public class PlayerServiceInterfaceImplTest {
         doThrow(LoginAlreadyExistsException.class).when(playerRepositoryMock).create(testPlayer);
         doNothing().when(playerRepositoryMock).create(testPlayer);
 
-        testPlayerService.createPlayer(1, "Max", "Sugrobov",
-                "Max", "Pass", Role.ADMIN);
+        PlayerMapper playerMapper = new PlayerMapper();
+        PlayerDTO testPlayerDTO = playerMapper.dtoFromEntity(testPlayer);
+        testPlayerService.createPlayer(testPlayerDTO);
 
         verify(playerRepositoryMock).create(testPlayer);
     }

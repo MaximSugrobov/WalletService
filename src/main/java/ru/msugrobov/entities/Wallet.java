@@ -12,6 +12,11 @@ import java.math.BigDecimal;
 @Data
 @AllArgsConstructor
 public class Wallet {
+    public Wallet(int playerId, BigDecimal balance) {
+        this.playerId = playerId;
+        this.balance = balance;
+    }
+
     /**
      * Wallet's identifier
      */

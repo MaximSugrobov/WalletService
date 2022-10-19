@@ -9,6 +9,14 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class Player {
+    public Player(String firstName, String lastName, String login, String password, Role role) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.login = login;
+        this.password = password;
+        this.role = role;
+    }
+
     /**
      * Player's identifier
      */
