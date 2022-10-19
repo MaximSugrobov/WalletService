@@ -25,7 +25,7 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
     private static final String SELECT_TRANSACTIONS_BY_WALLET_ID = "SELECT * FROM transactions WHERE wallet_id=?";
     private static final String CREATE_TRANSACTION = "INSERT INTO transactions (wallet_id, type, value)" +
             "values (?, CAST(? AS transaction_type), ?)";
-    private static final String UPDATE_TRANSACTION = "UPDATE transactions SET id=?, value=?";
+    private static final String UPDATE_TRANSACTION = "UPDATE transactions SET value=? WHERE id=?";
     private static final String DELETE_TRANSACTION_BY_ID = "DELETE FROM transactions WHERE id=?";
 
     /**
@@ -127,8 +127,8 @@ public class TransactionRepository implements RepositoryInterface<Transaction> {
         findTransactionById.updateFrom(transaction);
         try (Connection connection = DBconnection.getConnection()) {
             PreparedStatement statement = connection.prepareStatement(UPDATE_TRANSACTION);
-            statement.setInt(1, findTransactionById.getId());
-            statement.setBigDecimal(2, findTransactionById.getValue());
+            statement.setBigDecimal(1, findTransactionById.getValue());
+            statement.setInt(2, findTransactionById.getId());
             statement.executeUpdate();
         } catch (SQLException | IOException exception) {
             exception.printStackTrace();
