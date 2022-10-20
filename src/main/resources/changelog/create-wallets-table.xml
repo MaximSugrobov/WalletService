@@ -8,7 +8,7 @@
 
     <changeSet id="create-wallets-table-1" author="msugrobov">
         <createTable  tableName="wallets">
-            <column autoIncrement="true" name="id" type="int">
+            <column autoIncrement="true" name="id" type="serial">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="player_id" type="int">

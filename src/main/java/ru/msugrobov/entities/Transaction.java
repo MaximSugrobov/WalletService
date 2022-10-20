@@ -11,6 +11,12 @@ import java.math.BigDecimal;
 @Data
 @AllArgsConstructor
 public class Transaction {
+    public Transaction(int walletId, Type type, BigDecimal value) {
+        this.walletId = walletId;
+        this.type = type;
+        this.value = value;
+    }
+
     /**
      * Transaction identifier
      */

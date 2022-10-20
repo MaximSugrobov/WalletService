@@ -1,6 +1,5 @@
 package ru.msugrobov.DTO;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import ru.msugrobov.entities.Role;
 
@@ -8,7 +7,6 @@ import ru.msugrobov.entities.Role;
  * DTO for player
  */
 @Data
-@AllArgsConstructor
 public class PlayerDTO {
     /**
      * Player's identifier
@@ -39,4 +37,12 @@ public class PlayerDTO {
      * Player's role ENUM {@link Role}
      */
     private Role role;
+
+    public PlayerDTO(String firstName, String lastName, String login, String password, Role role) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.login = login;
+        this.password = password;
+        this.role = role;
+    }
 }

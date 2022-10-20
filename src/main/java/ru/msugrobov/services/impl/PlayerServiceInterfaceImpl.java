@@ -1,7 +1,8 @@
 package ru.msugrobov.services.impl;
 
+import ru.msugrobov.DTO.PlayerDTO;
 import ru.msugrobov.entities.Player;
-import ru.msugrobov.entities.Role;
+import ru.msugrobov.mapper.PlayerMapper;
 import ru.msugrobov.repositories.PlayerRepository;
 import ru.msugrobov.services.PlayerServiceInterface;
 
@@ -14,6 +15,7 @@ import java.util.List;
 public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
 
     public static PlayerRepository playerRepository;
+    private final PlayerMapper playerFromDto = new PlayerMapper();
     public PlayerServiceInterfaceImpl(PlayerRepository playerRepository) {
         PlayerServiceInterfaceImpl.playerRepository = playerRepository;
     }
@@ -40,16 +42,10 @@ public class PlayerServiceInterfaceImpl implements PlayerServiceInterface {
     /**
      * Create new player
      *
-     * @param idNumber  of the new player
-     * @param firstName of the new player
-     * @param lastName  of the new player
-     * @param login     of the new player
-     * @param password  of the new player
-     * @param role      of the new player
+     * @param playerDTO DTO for player creation
      */
-    public void createPlayer(Integer idNumber, String firstName,
-                             String lastName, String login, String password, Role role) {
-        Player newPlayer = new Player(idNumber, firstName, lastName, login, password, role);
+    public void createPlayer(PlayerDTO playerDTO) {
+        Player newPlayer = playerFromDto.entityFromDto(playerDTO);
         playerRepository.create(newPlayer);
     }
 

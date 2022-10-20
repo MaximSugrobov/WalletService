@@ -16,7 +16,7 @@ public class PlayerMapper implements MapperInterface<Player, PlayerDTO> {
      * @return dto from the entity
      */
     public PlayerDTO dtoFromEntity(Player player) {
-        return new PlayerDTO(player.getId(), player.getFirstName(), player.getLastName(),
+        return new PlayerDTO(player.getFirstName(), player.getLastName(),
                 player.getLogin(), player.getPassword(), player.getRole());
     }
 

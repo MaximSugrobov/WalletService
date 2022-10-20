@@ -9,7 +9,7 @@
     <changeSet id="create-audit_events-table-1" author="msugrobov">
         <sql>CREATE TYPE action_result AS ENUM ('SUCCESS', 'FAIL')</sql>
         <createTable  tableName="audit_events">
-            <column autoIncrement="true" name="id" type="int">
+            <column autoIncrement="true" name="id" type="serial">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="player_id" type="int">
