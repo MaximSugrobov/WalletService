@@ -1,9 +1,11 @@
 package ru.msugrobov.services.impl;
 
+import ru.msugrobov.DTO.TransactionDTO;
 import ru.msugrobov.entities.Direction;
 import ru.msugrobov.entities.Transaction;
 import ru.msugrobov.entities.Type;
 import ru.msugrobov.entities.Wallet;
+import ru.msugrobov.mapper.TransactionMapper;
 import ru.msugrobov.repositories.TransactionRepository;
 import ru.msugrobov.repositories.WalletRepository;
 import ru.msugrobov.services.TransactionServiceInterface;
@@ -18,6 +20,7 @@ import java.util.List;
 public class TransactionServiceInterfaceImpl implements TransactionServiceInterface {
 
     public static TransactionRepository transactionRepository;
+    private final TransactionMapper transactionMapper = new TransactionMapper();
     private final WalletRepository walletRepositoryForTransactionService = WalletServiceInterfaceImpl.walletRepository;
     public TransactionServiceInterfaceImpl(TransactionRepository transactionRepository) {
         TransactionServiceInterfaceImpl.transactionRepository = transactionRepository;
@@ -56,22 +59,20 @@ public class TransactionServiceInterfaceImpl implements TransactionServiceInterf
     /**
      * Create new transaction
      *
-     * @param id       identifier
-     * @param walletId identifier of the wallet
-     * @param type     type of the transaction ENUM {@link Type}
-     * @param value    value of transaction
+     * @param transactionDTO DTO for transaction creation
      */
-    public void createTransaction(Integer id, int walletId, Type type, BigDecimal value) {
-        Wallet walletForTransactionCreation = walletRepositoryForTransactionService.readById(walletId);
-        Transaction newTransaction = new Transaction(id, walletId, type, value);
+    public void createTransaction(TransactionDTO transactionDTO) {
+        Wallet walletForTransactionCreation = walletRepositoryForTransactionService
+                .readById(transactionDTO.getWalletId());
+        Transaction newTransaction = transactionMapper.entityFromDto(transactionDTO);
         Direction direction;
 
-        if (type.equals(Type.DEBIT)) {
+        if (newTransaction.getType().equals(Type.DEBIT)) {
             direction = Direction.NEGATIVE;
         } else {
             direction = Direction.POSITIVE;
         }
-        walletForTransactionCreation.updateBalance(direction, value);
+        walletForTransactionCreation.updateBalance(direction, newTransaction.getValue());
         transactionRepository.create(newTransaction);
     }
 

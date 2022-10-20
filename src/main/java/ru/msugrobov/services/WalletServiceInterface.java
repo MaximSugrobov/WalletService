@@ -1,5 +1,6 @@
 package ru.msugrobov.services;
 
+import ru.msugrobov.DTO.WalletDTO;
 import ru.msugrobov.entities.Wallet;
 
 import java.math.BigDecimal;
@@ -36,11 +37,9 @@ public interface WalletServiceInterface {
     /**
      * Create new wallet
      *
-     * @param id identifier
-     * @param playerId {@see Player.id} Identifier of a player who owns the wallet
-     * @param balance of the wallet
+     * @param walletDTO DTO for wallet creation
      */
-    void createWallet(Integer id, int playerId, BigDecimal balance);
+    void createWallet(WalletDTO walletDTO);
 
     /**
      * Update wallet by id

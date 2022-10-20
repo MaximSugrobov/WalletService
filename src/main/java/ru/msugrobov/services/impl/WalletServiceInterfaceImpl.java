@@ -1,7 +1,9 @@
 package ru.msugrobov.services.impl;
 
+import ru.msugrobov.DTO.WalletDTO;
 import ru.msugrobov.entities.Wallet;
 import ru.msugrobov.exceptions.IdNotFoundException;
+import ru.msugrobov.mapper.WalletMapper;
 import ru.msugrobov.repositories.PlayerRepository;
 import ru.msugrobov.repositories.WalletRepository;
 import ru.msugrobov.services.WalletServiceInterface;
@@ -16,6 +18,7 @@ import java.util.List;
 public class WalletServiceInterfaceImpl implements WalletServiceInterface {
 
     public static WalletRepository walletRepository;
+    private final WalletMapper walletMapper = new WalletMapper();
     private final PlayerRepository playerRepositoryForWalletService = PlayerServiceInterfaceImpl.playerRepository;
     public WalletServiceInterfaceImpl(WalletRepository walletRepository) {
         WalletServiceInterfaceImpl.walletRepository = walletRepository;
@@ -53,16 +56,14 @@ public class WalletServiceInterfaceImpl implements WalletServiceInterface {
     /**
      * Create new wallet
      *
-     * @param idNumber       identifier
-     * @param playerId {@see Player.id} Identifier of a player who owns the wallet
-     * @param balance  of the wallet
+     * @param walletDTO DTO for wallet creation
      */
-    public void createWallet(Integer idNumber, int playerId, BigDecimal balance) {
-        Wallet newWallet = new Wallet(idNumber, playerId, balance);
-        if (playerRepositoryForWalletService.readById(playerId) != null) {
+    public void createWallet(WalletDTO walletDTO) {
+        Wallet newWallet = walletMapper.entityFromDto(walletDTO);
+        if (playerRepositoryForWalletService.readById(newWallet.getPlayerId()) != null) {
             walletRepository.create(newWallet);
         } else {
-            throw new IdNotFoundException(String.format("Player with id %s does not exist", playerId));
+            throw new IdNotFoundException(String.format("Player with id %s does not exist", newWallet.getPlayerId()));
         }
     }
 

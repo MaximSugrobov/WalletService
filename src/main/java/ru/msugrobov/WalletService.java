@@ -1,6 +1,5 @@
 package ru.msugrobov;
 
-import ru.msugrobov.entities.*;
 import ru.msugrobov.repositories.AuditEventRepository;
 import ru.msugrobov.repositories.PlayerRepository;
 import ru.msugrobov.repositories.TransactionRepository;
@@ -15,11 +14,7 @@ public class WalletService {
 
     public static void initUIS() {
 
-        Player admin = new Player(1, "Maxim", "Sug", "admin", "admin", Role.ADMIN);
-        Player user = new Player(2, "User", "User", "user", "user", Role.USER);
         PlayerRepository playerRepository = new PlayerRepository();
-        playerRepository.create(admin);
-        playerRepository.create(user);
         PlayerServiceInterfaceImpl playerServiceInterfaceImpl = new PlayerServiceInterfaceImpl(playerRepository);
 
         WalletRepository walletRepository = new WalletRepository();

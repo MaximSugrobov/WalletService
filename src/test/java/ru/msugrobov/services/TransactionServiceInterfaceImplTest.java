@@ -5,10 +5,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoSession;
+import ru.msugrobov.DTO.TransactionDTO;
 import ru.msugrobov.entities.*;
 import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
 import ru.msugrobov.exceptions.InsufficientBalanceException;
+import ru.msugrobov.mapper.TransactionMapper;
 import ru.msugrobov.repositories.TransactionRepository;
 import ru.msugrobov.repositories.WalletRepository;
 import ru.msugrobov.services.impl.TransactionServiceInterfaceImpl;
@@ -50,7 +52,9 @@ public class TransactionServiceInterfaceImplTest {
         doThrow(IdNotFoundException.class).when(transactionRepositoryMock).create(testTransaction);
         doNothing().when(transactionRepositoryMock).create(testTransaction);
 
-        testTransactionService.createTransaction(1, 1, Type.DEBIT, new BigDecimal(5000));
+        TransactionMapper transactionMapper = new TransactionMapper();
+        TransactionDTO transactionDTOForCreation = transactionMapper.dtoFromEntity(testTransaction);
+        testTransactionService.createTransaction(transactionDTOForCreation);
 
         verify(transactionRepositoryMock).create(testTransaction);
     }
