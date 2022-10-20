@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 public class AuditEventDTO {
+
+    public AuditEventDTO() {}
+
     /**
      * Identifier
      */
@@ -36,4 +39,18 @@ public class AuditEventDTO {
      * Result of the player's action ENUM {@link ActionResult}
      */
     private ActionResult actionResult;
+
+    /**
+     * Set attributes of DTO according to given params
+     *
+     * @param playerIdFromUIS player identifier
+     * @param actionFromUIS action description
+     * @param actionResultFromUIS result of the action {@link ActionResult}
+     */
+    public void updateAuditEventDTO(int playerIdFromUIS, String actionFromUIS, ActionResult actionResultFromUIS) {
+        this.playerId = playerIdFromUIS;
+        this.action = actionFromUIS;
+        this.dateTime = LocalDateTime.now();
+        this.actionResult = actionResultFromUIS;
+    }
 }

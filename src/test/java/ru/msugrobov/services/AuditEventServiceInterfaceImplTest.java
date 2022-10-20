@@ -5,10 +5,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoSession;
+import ru.msugrobov.DTO.AuditEventDTO;
 import ru.msugrobov.entities.ActionResult;
 import ru.msugrobov.entities.AuditEvent;
 import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
+import ru.msugrobov.mapper.AuditEventMapper;
 import ru.msugrobov.repositories.AuditEventRepository;
 import ru.msugrobov.services.impl.AuditEventServiceInterfaceImpl;
 
@@ -41,8 +43,9 @@ public class AuditEventServiceInterfaceImplTest {
         doThrow(IdAlreadyExistsException.class).when(auditEventRepositoryMock).create(testEvent);
         doNothing().when(auditEventRepositoryMock).create(testEvent);
 
-        testAuditEventService.createEvent(1, 1, "testAction",
-                LocalDateTime.of(1990, 10, 10, 20, 20), ActionResult.SUCCESS);
+        AuditEventMapper auditEventMapper = new AuditEventMapper();
+        AuditEventDTO testEventDTO = auditEventMapper.dtoFromEntity(testEvent);
+        testAuditEventService.createEvent(testEventDTO);
 
         verify(auditEventRepositoryMock).create(testEvent);
     }

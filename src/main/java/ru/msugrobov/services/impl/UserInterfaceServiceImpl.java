@@ -5,12 +5,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import bsh.util.JConsole;
 import bsh.util.GUIConsoleInterface;
 import ru.msugrobov.ApplicationContext;
+import ru.msugrobov.DTO.AuditEventDTO;
 import ru.msugrobov.DTO.PlayerDTO;
+import ru.msugrobov.DTO.TransactionDTO;
+import ru.msugrobov.DTO.WalletDTO;
 import ru.msugrobov.entities.ActionResult;
 import ru.msugrobov.entities.Player;
 import ru.msugrobov.entities.Role;
@@ -29,6 +31,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
     private final WalletServiceInterfaceImpl walletServiceInterfaceImpl;
     private final TransactionServiceInterfaceImpl transactionServiceInterfaceImpl;
     private final AuditEventServiceInterfaceImpl auditEventServiceInterfaceImpl;
+    private final AuditEventDTO auditEventDTOForUIS = new AuditEventDTO();
     private final JFrame frame = new JFrame("Wallet service");
     private final JConsole console = new JConsole();
     private final Reader input = console.getIn();
@@ -62,7 +65,6 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
 
     private void authorizationLoop(GUIConsoleInterface console) {
         String newLine = System.getProperty("line.separator");
-        int eventId = 0;
         console.print("Enter login: ", Color.BLACK);
         try {
             String playersLogin = bufferInput.readLine();
@@ -72,9 +74,9 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                 auditEventServiceInterfaceImpl.authorizeAdmin(playersLogin, playersPassword);
                 Player playerToAuthorize = ApplicationContext.INSTANCE.get("player", Player.class);
                 if (playerToAuthorize.getRole().equals(Role.ADMIN)) {
-                    adminLoop(console, playerToAuthorize.getId(), eventId);
+                    adminLoop(console, playerToAuthorize.getId());
                 } else {
-                    userLoop(console, playerToAuthorize.getId(), eventId);
+                    userLoop(console, playerToAuthorize.getId());
                 }
             } catch (CredentialsErrorException | LoginNotFoundException exception) {
                 console.print(exception.getMessage() + newLine, Color.RED);
@@ -85,7 +87,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
         }
     }
 
-    private void adminLoop(GUIConsoleInterface console, int playerId, int eventId) {
+    private void adminLoop(GUIConsoleInterface console, int playerId) {
         String newLine = System.getProperty("line.separator");
         String viableInputParameters = "1. Player" + newLine +
                 "2. Wallet" + newLine +
@@ -105,25 +107,25 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         bufferInput.close();
                     case ("player"):
                     case ("1"):
-                        playerServiceLoop(console, playerId, eventId);
+                        playerServiceLoop(console, playerId);
                     case ("wallet"):
                     case ("2"):
-                        walletServiceLoop(console, playerId, eventId);
+                        walletServiceLoop(console, playerId);
                     case ("transaction"):
                     case ("3"):
-                        transactionServiceLoop(console, playerId, eventId);
+                        transactionServiceLoop(console, playerId);
                     case ("audit"):
                     case ("4"):
-                        auditLoop(console, playerId, eventId);
+                        auditLoop(console, playerId);
                     case ("user"):
                     case ("5"):
-                        userLoop(console, playerId, eventId);
+                        userLoop(console, playerId);
                     case ("menu"):
                         console.print("Type entity to work with:" + newLine, Color.BLACK);
                         console.print(viableInputParameters, Color.BLACK);
                         break;
                     case (";"):
-                        adminLoop(console, playerId, eventId);
+                        adminLoop(console, playerId);
                     default:
                         console.print(String.format("Entity %s does not exist, try again:  " +
                                 newLine + viableInputParameters, line), Color.BLACK);
@@ -135,7 +137,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
         }
     }
 
-    private void userLoop(GUIConsoleInterface console, int playerId, int eventId) {
+    private void userLoop(GUIConsoleInterface console, int playerId) {
         String newLine = System.getProperty("line.separator");
         String viableInputParameters = "1. Check wallet balance" + newLine +
                 "2. Create transaction" + newLine +
@@ -165,15 +167,13 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             console.print(walletServiceInterfaceImpl
                                     .findById(playerId) + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCheck,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionCheck, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCheck,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionCheck, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -181,26 +181,22 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                     case ("2"):
                         String actionCreate = "Create transaction";
                         console.print("Creating new transaction" + newLine, Color.BLACK);
-                        console.print("Enter transaction id: ", Color.BLACK);
-                        Integer idNumber = Integer.parseInt(bufferInput.readLine());
                         console.print("Enter type DEBIT or CREDIT: ", Color.BLACK);
                         Type type = Type.valueOf(bufferInput.readLine().toUpperCase());
                         console.print("Enter value of the transaction: ", Color.BLACK);
                         BigDecimal value = new BigDecimal(Integer.parseInt(bufferInput.readLine()));
                         try {
-                            transactionServiceInterfaceImpl.createTransaction
-                                    (idNumber, walletId, type, value);
+                            TransactionDTO transactionDTOForCreation = new TransactionDTO(walletId, type, value);
+                            transactionServiceInterfaceImpl.createTransaction(transactionDTOForCreation);
                             console.print("Transaction successfully created" + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCreate,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionCreate, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdAlreadyExistsException | IdNotFoundException |
                                  InsufficientBalanceException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCreate,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionCreate, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -211,22 +207,22 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                             console.print(transactionServiceInterfaceImpl
                                     .findAllTransactionsByWalletId(walletId) +
                                     newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionViewTransactionHistory,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionViewTransactionHistory,
+                                    ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionViewTransactionHistory,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionViewTransactionHistory,
+                                    ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
                     case ("admin"):
                     case ("4"):
                         if (playerServiceInterfaceImpl.findById(playerId).getRole().equals(Role.ADMIN)) {
-                            adminLoop(console, playerId, eventId);
+                            adminLoop(console, playerId);
                         } else {
                             console.print("You don't have access to this command" + newLine, Color.RED);
                         }
@@ -235,7 +231,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         console.print(viableInputParameters, Color.BLACK);
                         break;
                     case (";"):
-                        userLoop(console, playerId, eventId);
+                        userLoop(console, playerId);
                     default:
                         console.print(String.format("Entity %s does not exist, try again:  " +
                                 newLine + viableInputParameters, line), Color.BLACK);
@@ -247,7 +243,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
         }
     }
 
-    private void playerServiceLoop(GUIConsoleInterface console, int playerId, int eventId) {
+    private void playerServiceLoop(GUIConsoleInterface console, int playerId) {
         String newLine = System.getProperty("line.separator");
         String viableInputParameters = "1. Create player" + newLine +
                 "2. Find player" + newLine +
@@ -284,15 +280,13 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                                         (firstName, lastName, login, password, role);
                             playerServiceInterfaceImpl.createPlayer(playerDTOForPlayerCreation);
                             console.print("Player successfully created" + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCreate,
-                                        LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionCreate, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press any key to return to the menu ", Color.BLACK);
                         } catch (IdAlreadyExistsException | LoginAlreadyExistsException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCreate,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionCreate, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -303,24 +297,22 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             console.print(playerServiceInterfaceImpl
                                     .findById(Integer.parseInt(bufferInput.readLine())) + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFindById,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFindById,
+                                    ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFindById,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFindById, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
                     case ("find all"):
                     case ("3"):
                         String actionFindAll = "Find all players";
-                        eventId++;
-                        auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFindAll,
-                                LocalDateTime.now(), ActionResult.SUCCESS);
+                        this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFindAll, ActionResult.SUCCESS);
+                        auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                         console.print(playerServiceInterfaceImpl.findAllPlayers() + newLine, Color.BLACK);
                         console.print("Press ENTER to return to the menu ", Color.BLACK);
                         break;
@@ -339,16 +331,14 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             playerServiceInterfaceImpl.updatePlayer
                                     (idPlayerToBeUpdated, updatedFirstName, updatedLastName, updatedPassword);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionUpdate,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionUpdate, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Player successfully updated" + newLine, Color.BLACK);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionUpdate,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionUpdate, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -358,16 +348,14 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         console.print("Enter id to delete player: ");
                         try {
                             playerServiceInterfaceImpl.deletePlayer(Integer.parseInt(bufferInput.readLine()));
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionDelete,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionDelete, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Player successfully deleted" + newLine, Color.BLACK);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionDelete,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionDelete, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -376,9 +364,9 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         console.print(viableInputParameters, Color.BLACK);
                         break;
                     case ("back"):
-                        adminLoop(console, playerId, eventId);
+                        adminLoop(console, playerId);
                     case (";"):
-                        playerServiceLoop(console, playerId, eventId);
+                        playerServiceLoop(console, playerId);
                     default:
                         console.print(String.format("Command %s does not exist, try again:  " +
                                 newLine + viableInputParameters + newLine, line), Color.BLACK);
@@ -391,7 +379,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
         }
     }
 
-    private void walletServiceLoop(GUIConsoleInterface console, int playerId, int eventId) {
+    private void walletServiceLoop(GUIConsoleInterface console, int playerId) {
         String newLine = System.getProperty("line.separator");
         String viableInputParameters = "1. Create wallet" + newLine +
                 "2. Find wallet" + newLine +
@@ -413,26 +401,22 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                     case ("1"):
                         String actionCreate = "Create wallet";
                         console.print("Creating new wallet" + newLine, Color.BLACK);
-                        console.print("Enter id: ", Color.BLACK);
-                        Integer idNumber = Integer.parseInt(bufferInput.readLine());
                         console.print("Enter id of the player who owns the wallet: ", Color.BLACK);
                         int playerIdForWalletCreation = Integer.parseInt(bufferInput.readLine());
                         console.print("Enter initial wallet balance: ", Color.BLACK);
                         BigDecimal balance = new BigDecimal(Integer.parseInt(bufferInput.readLine()));
                         try {
-                            walletServiceInterfaceImpl.createWallet
-                                    (idNumber, playerIdForWalletCreation, balance);
+                            WalletDTO walletDTOForCreation = new WalletDTO(playerIdForWalletCreation, balance);
+                            walletServiceInterfaceImpl.createWallet(walletDTOForCreation);
                             console.print("Wallet successfully created" + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCreate,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionCreate, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (PlayerIdAlreadyExistsException | IdAlreadyExistsException | IdNotFoundException
                                 exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCreate,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionCreate, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -443,24 +427,21 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             console.print(walletServiceInterfaceImpl
                                     .findById(Integer.parseInt(bufferInput.readLine())) + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFind,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFind, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFind,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFind, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
                     case ("find all"):
                     case ("3"):
                         String actionFindAll = "Find all wallets";
-                        eventId++;
-                        auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFindAll,
-                                LocalDateTime.now(), ActionResult.SUCCESS);
+                        this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFindAll, ActionResult.SUCCESS);
+                        auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                         console.print(walletServiceInterfaceImpl.findAllWallets() + newLine, Color.BLACK);
                         console.print("Press ENTER to return to the menu ", Color.BLACK);
                         break;
@@ -475,15 +456,13 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             walletServiceInterfaceImpl.updateWallet(idWalletToBeUpdated, newBalance);
                             console.print("Wallet successfully updated" + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionUpdate,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionUpdate, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionUpdate,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionUpdate, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -494,15 +473,13 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             walletServiceInterfaceImpl.deleteWallet(Integer.parseInt(bufferInput.readLine()));
                             console.print("Wallet successfully deleted" + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionDelete,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionDelete, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionDelete,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionDelete, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -511,9 +488,9 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         console.print(viableInputParameters, Color.BLACK);
                         break;
                     case ("back"):
-                        adminLoop(console, playerId, eventId);
+                        adminLoop(console, playerId);
                     case (";"):
-                        walletServiceLoop(console, playerId, eventId);
+                        walletServiceLoop(console, playerId);
                     default:
                         console.print(String.format("Command %s does not exist, try again:  " +
                                 newLine + viableInputParameters + newLine, line), Color.BLACK);
@@ -526,7 +503,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
         }
     }
 
-    private void transactionServiceLoop(GUIConsoleInterface console, int playerId, int eventId) {
+    private void transactionServiceLoop(GUIConsoleInterface console, int playerId) {
         String newLine = System.getProperty("line.separator");
         String viableInputParameters = "1. Create transaction" + newLine +
                 "2. Find transaction" + newLine +
@@ -549,8 +526,6 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                     case ("1"):
                         String actionCreate = "Create transaction";
                         console.print("Creating new transaction" + newLine, Color.BLACK);
-                        console.print("Enter id: ", Color.BLACK);
-                        Integer idNumber = Integer.parseInt(bufferInput.readLine());
                         console.print("Enter id of the wallet: ", Color.BLACK);
                         int walletId = Integer.parseInt(bufferInput.readLine());
                         console.print("Enter type DEBIT or CREDIT: ", Color.BLACK);
@@ -558,19 +533,17 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         console.print("Enter value of the transaction: ", Color.BLACK);
                         BigDecimal value = new BigDecimal(Integer.parseInt(bufferInput.readLine()));
                         try {
-                            transactionServiceInterfaceImpl.createTransaction
-                                    (idNumber, walletId, type, value);
+                            TransactionDTO transactionDTOForCreation = new TransactionDTO(walletId, type, value);
+                            transactionServiceInterfaceImpl.createTransaction(transactionDTOForCreation);
                             console.print("Transaction successfully created" + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCreate,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionCreate, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdAlreadyExistsException | IdNotFoundException |
                                  InsufficientBalanceException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionCreate,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionCreate, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -581,24 +554,21 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             console.print(transactionServiceInterfaceImpl
                                     .findById(Integer.parseInt(bufferInput.readLine())) + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFind,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFind, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFind,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFind, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
                     case ("find all"):
                     case ("3"):
                         String actionFindAll = "Find all transactions";
-                        eventId++;
-                        auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFindAll,
-                                LocalDateTime.now(), ActionResult.SUCCESS);
+                        this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFindAll, ActionResult.SUCCESS);
+                        auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                         console.print(transactionServiceInterfaceImpl.findAllTransactions() + newLine, Color.BLACK);
                         console.print("Press ENTER to return to the menu ", Color.BLACK);
                         break;
@@ -610,15 +580,15 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                             console.print(transactionServiceInterfaceImpl
                                     .findAllTransactionsByWalletId(Integer.parseInt(bufferInput.readLine())) + 
                                     newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFindByWalletId,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFindByWalletId,
+                                    ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionFindByWalletId,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionFindByWalletId,
+                                    ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -633,15 +603,13 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             transactionServiceInterfaceImpl.updateTransaction(idTransactionToBeUpdated, newValue);
                             console.print("Transaction successfully updated" + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionUpdate,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionUpdate, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException | InsufficientBalanceException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionUpdate,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionUpdate, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -652,15 +620,13 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         try {
                             transactionServiceInterfaceImpl.deleteTransaction(Integer.parseInt(bufferInput.readLine()));
                             console.print("Transaction successfully deleted" + newLine, Color.BLACK);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionDelete,
-                                    LocalDateTime.now(), ActionResult.SUCCESS);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionDelete, ActionResult.SUCCESS);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         } catch (IdNotFoundException exception) {
                             console.print(exception.getMessage() + newLine, Color.RED);
-                            eventId++;
-                            auditEventServiceInterfaceImpl.createEvent(eventId, playerId, actionDelete,
-                                    LocalDateTime.now(), ActionResult.FAIL);
+                            this.auditEventDTOForUIS.updateAuditEventDTO(playerId, actionDelete, ActionResult.FAIL);
+                            auditEventServiceInterfaceImpl.createEvent(auditEventDTOForUIS);
                             console.print("Press ENTER to return to the menu ", Color.BLACK);
                         }
                         break;
@@ -669,9 +635,9 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         console.print(viableInputParameters, Color.BLACK);
                         break;
                     case ("back"):
-                        adminLoop(console, playerId, eventId);
+                        adminLoop(console, playerId);
                     case (";"):
-                        transactionServiceLoop(console, playerId, eventId);
+                        transactionServiceLoop(console, playerId);
                     default:
                         console.print(String.format("Command %s does not exist, try again:  " +
                                 newLine + viableInputParameters + newLine, line), Color.BLACK);
@@ -683,7 +649,7 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
         }
     }
 
-    private void auditLoop(GUIConsoleInterface console, int playerId, int eventId) {
+    private void auditLoop(GUIConsoleInterface console, int playerId) {
         String newLine = System.getProperty("line.separator");
         String viableInputParameters = "1. Find event by id" + newLine +
                 "2. Find all events" + newLine +
@@ -734,9 +700,9 @@ public class UserInterfaceServiceImpl implements UserInterfaceService {
                         console.print(viableInputParameters, Color.BLACK);
                         break;
                     case ("back"):
-                        adminLoop(console, playerId, eventId);
+                        adminLoop(console, playerId);
                     case (";"):
-                        auditLoop(console, playerId, eventId);
+                        auditLoop(console, playerId);
                     default:
                         console.print(String.format("Command %s does not exist, try again:  " +
                                 newLine + viableInputParameters + newLine, line), Color.BLACK);

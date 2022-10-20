@@ -1,15 +1,15 @@
 package ru.msugrobov.services.impl;
 
 import ru.msugrobov.ApplicationContext;
-import ru.msugrobov.entities.ActionResult;
+import ru.msugrobov.DTO.AuditEventDTO;
 import ru.msugrobov.entities.AuditEvent;
 import ru.msugrobov.entities.Player;
 import ru.msugrobov.exceptions.CredentialsErrorException;
+import ru.msugrobov.mapper.AuditEventMapper;
 import ru.msugrobov.repositories.AuditEventRepository;
 import ru.msugrobov.repositories.PlayerRepository;
 import ru.msugrobov.services.AuditEventServiceInterface;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -19,6 +19,7 @@ import java.util.List;
 public class AuditEventServiceInterfaceImpl implements AuditEventServiceInterface {
 
     public static AuditEventRepository eventRepository;
+    private final AuditEventMapper auditEventMapper = new AuditEventMapper();
     private final PlayerRepository playerRepositoryForAuditEventService = PlayerServiceInterfaceImpl.playerRepository;
     public AuditEventServiceInterfaceImpl(AuditEventRepository eventRepository) {
         AuditEventServiceInterfaceImpl.eventRepository = eventRepository;
@@ -56,15 +57,11 @@ public class AuditEventServiceInterfaceImpl implements AuditEventServiceInterfac
     /**
      * Create and audit new event
      *
-     * @param id       identifier
-     * @param playerId identifier of the player
-     * @param action   performed action by player
-     * @param dateTime date and time of performed action
+     * @param auditEventDTO DTO for auditEvent creation
      */
-    public void createEvent(Integer id, int playerId, String action,
-                            LocalDateTime dateTime, ActionResult actionResult) {
-        AuditEvent newEventToSave = new AuditEvent(id, playerId, action, dateTime, actionResult);
-        eventRepository.create(newEventToSave);
+    public void createEvent(AuditEventDTO auditEventDTO) {
+        AuditEvent auditEvent = auditEventMapper.entityFromDto(auditEventDTO);
+        eventRepository.create(auditEvent);
     }
 
     /**

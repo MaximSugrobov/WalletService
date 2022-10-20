@@ -1,7 +1,7 @@
 package ru.msugrobov.services;
 
+import ru.msugrobov.DTO.TransactionDTO;
 import ru.msugrobov.entities.Transaction;
-import ru.msugrobov.entities.Type;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -37,12 +37,9 @@ public interface TransactionServiceInterface {
     /**
      * Create new transaction
      *
-     * @param id identifier
-     * @param walletId identifier of the wallet
-     * @param type type of the transaction ENUM {@link Type}
-     * @param value value of transaction
+     * @param transactionDTO DTO for transaction creation
      */
-    void createTransaction(Integer id, int walletId, Type type, BigDecimal value);
+    void createTransaction(TransactionDTO transactionDTO);
 
     /**
      * Update transaction by id

@@ -5,12 +5,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoSession;
+import ru.msugrobov.DTO.WalletDTO;
 import ru.msugrobov.entities.Player;
 import ru.msugrobov.entities.Role;
 import ru.msugrobov.entities.Wallet;
 import ru.msugrobov.exceptions.IdAlreadyExistsException;
 import ru.msugrobov.exceptions.IdNotFoundException;
 import ru.msugrobov.exceptions.PlayerIdAlreadyExistsException;
+import ru.msugrobov.mapper.WalletMapper;
 import ru.msugrobov.repositories.PlayerRepository;
 import ru.msugrobov.repositories.WalletRepository;
 import ru.msugrobov.services.impl.PlayerServiceInterfaceImpl;
@@ -52,7 +54,9 @@ public class WalletServiceInterfaceImplTest {
         doThrow(IdNotFoundException.class).when(walletRepositoryMock).create(testWallet);
         doNothing().when(walletRepositoryMock).create(testWallet);
 
-        testWalletService.createWallet(1, 1, new BigDecimal(15000));
+        WalletMapper walletMapper = new WalletMapper();
+        WalletDTO walletDTO = walletMapper.dtoFromEntity(testWallet);
+        testWalletService.createWallet(walletDTO);
 
         verify(walletRepositoryMock).create(testWallet);
     }

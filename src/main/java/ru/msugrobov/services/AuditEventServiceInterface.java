@@ -1,9 +1,8 @@
 package ru.msugrobov.services;
 
-import ru.msugrobov.entities.ActionResult;
+import ru.msugrobov.DTO.AuditEventDTO;
 import ru.msugrobov.entities.AuditEvent;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -37,12 +36,9 @@ public interface AuditEventServiceInterface {
     /**
      * Create and audit new event
      *
-     * @param id identifier
-     * @param playerId identifier of the player
-     * @param action performed action by player
-     * @param dateTime date and time of performed action
+     * @param auditEventDTO DTO for auditEvent creation
      */
-    void createEvent(Integer id, int playerId, String action, LocalDateTime dateTime, ActionResult actionResult);
+    void createEvent(AuditEventDTO auditEventDTO);
 
     /**
      * Authorization of a player
