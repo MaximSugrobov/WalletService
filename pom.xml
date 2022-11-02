@@ -7,6 +7,9 @@
     <groupId>ru.msugrobov</groupId>
     <artifactId>WalletService</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <name>WalletService</name>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -18,6 +21,9 @@
         <mockito.version>4.7.0</mockito.version>
         <postgresql.version>42.5.0</postgresql.version>
         <liquibase.version>4.16.1</liquibase.version>
+        <servlet.version>5.0.0</servlet.version>
+        <war.version>3.3.2</war.version>
+        <jwt.version>0.5.1</jwt.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -59,6 +65,17 @@
             <artifactId>liquibase-maven-plugin</artifactId>
             <version>${liquibase.version}</version>
         </dependency>
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>${servlet.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>${jwt.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -82,11 +99,19 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>${war.version}</version>
+                <configuration>
+                    <warSourceDirectory>src/main/webapp</warSourceDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.liquibase</groupId>
                 <artifactId>liquibase-maven-plugin</artifactId>
                 <version>${liquibase.version}</version>
                 <configuration>
-                    <propertyFile>src/main/resources/liquibase.properties</propertyFile>
+                    <propertyFile>src/main/resources/application.properties</propertyFile>
                 </configuration>
                 <dependencies>
                     <dependency>

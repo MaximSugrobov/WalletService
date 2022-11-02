@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Repository for player entity
@@ -98,6 +99,10 @@ public class PlayerRepository implements RepositoryInterface<Player> {
      * @param player creates entity if not already exists
      */
     public void create(Player player) {
+        if (Objects.equals(player.getFirstName(), "") || Objects.equals(player.getLastName(), "")
+                || Objects.equals(player.getLogin(), "") || Objects.equals(player.getPassword(), "")) {
+            throw new CredentialsErrorException("All fields in registration form are required, try again");
+        }
         if (!existByLogin(player.getLogin())) {
             try (Connection connection = DBconnection.getConnection()) {
                 PreparedStatement statement = connection.prepareStatement(CREATE_PLAYER);
@@ -168,7 +173,7 @@ public class PlayerRepository implements RepositoryInterface<Player> {
         }
     }
 
-    private Player playerFromResultSet(ResultSet resultSet) throws SQLException {
+    public Player playerFromResultSet(ResultSet resultSet) throws SQLException {
         Player playerFromResultSet;
         String roleFromResultSet = resultSet.getString("role");
         if (!Role.contains(roleFromResultSet)) {
