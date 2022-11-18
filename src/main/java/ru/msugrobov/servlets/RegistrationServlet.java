@@ -15,12 +15,21 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 
+/**
+ * Describes contract for register new user
+ */
 public class RegistrationServlet extends HttpServlet {
 
     private final PlayerRepository playerRepository = new PlayerRepository();
     private final PlayerServiceInterfaceImpl playerServiceInterfaceImpl = new PlayerServiceInterfaceImpl
             (playerRepository);
 
+    /**
+     * Implements method for register new user via servlet
+     *
+     * @param request HTTP request from client
+     * @param response HTTP response from server
+     */
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("text/html");
         PrintWriter output = response.getWriter();
